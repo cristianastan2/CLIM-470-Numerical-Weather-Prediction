@@ -1,5 +1,4 @@
 # CLIM-470
 
-GitHub Project for CLIM 470 Project
+GitHub  Reopository for CLIM 470 Project
 
-# Add new feature
