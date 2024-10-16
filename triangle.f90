@@ -1,3 +1,23 @@
+!Rachel's Code
+program triangle
+implicit none
+
+real::a,b,c,theta,thetar
+real:: pi = 3.14
+
+write(*,*)'Enter the length of the hypotenuse C:'
+read(*,*)c
+write(*,*)'Enter the angle theta in degrees'
+read(*,*)theta
+
+thetar = theta * 180 / pi
+
+a=c*cos(thetar)
+b=c*sin(thetar)
+
+write(*,*)'The length of adjacent side is', a
+write(*,*)'The length of opposite side is', b
+
 ! Alex's fortran code
 program triangle
 real:: a,b,c,theta
@@ -12,7 +32,7 @@ b=c*sin(theta)
 
 write(*,*) 'The length of adjacent side is ', a
 write(*,*) 'The length of opposite side is ', b
-=======
+
 ! Matthew's code
 real :: a,b,c,theta
 real, parameter :: pi = 3.1415926536
@@ -49,5 +69,6 @@ write(*,*) 'adjacent side is', a
 write(*,*) 'opposite side is', b
 
 stop
+
 
 end program triangle
