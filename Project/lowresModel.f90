@@ -1,12 +1,11 @@
 program lowresmodel
-
 implicit none
 
 !variable declaration
 real, parameter :: Lx = 6000, Ly = 2000                 !domain in km
-real, parameter :: Dx = 500, Dy = 500                   !grid resolution in km
+real, parameter :: Dx = 500                   !grid resolution in km
 real, parameter :: dT = 100                             !time step, 100 seconds
-integer, parameter :: Nx = (Lx/Dx), Ny = (Ly/Dy)        !create grid points for array
+integer, parameter :: Nx = (Lx/Dx), Ny = (Ly/Dx)        !create grid points for array
 integer :: i, j, t, nstep                               !define other potentially important variables
 real :: time                                            !TIME
 
@@ -16,12 +15,10 @@ real, dimension(Nx, Ny) :: h, u, v, q, hsurf, lh, lu, lv, lq   !array creation w
 !showcase model info
 print *, "Grid Type: C"
 print *, "Domain (km):", Lx, Ly
-print *, "Grid Resolution (km):", Dx, Dy
+print *, "Grid Resolution (km):", Dx
 print *, "X-Direction Grid Point #:", Nx
 print *, "Y-Direction Grid Point #:", Ny
 
-!initialize main grid and topopgraphy
-call initgrid()
 
 !create Adams-Bashforth time differencing loop
 time = 0
@@ -37,23 +34,54 @@ do t = 1, nstep
 	end if
 end do
 
+call initgrid(h, u, v, q, hsurf)
+open(unit=10, file='topo.dat', access='direct', form='unformatted', status='unknown', action='write', recl=4*Nx*Ny)  !scary thing
+write(10, rec=1) hsurf
+
+
 end program lowresmodel
 
-subroutine initgrid()	!creates grid, ridge, and topography.
 
-real, dimension(:,:), intent(out) :: h, u, v, q, hsurf
+
+
+subroutine initgrid(h, u, v, q, hsurf)	!creates grid, ridge, and topography.
+implicit none
+
+real, parameter :: Lx = 6000, Ly = 2000
+real, parameter :: Dx = 500
+integer, parameter :: Nx = (Lx/Dx), Ny = (Ly/Dx)
+
+real, dimension(Nx,Ny), intent(out) :: h, u, v, q, hsurf
 integer :: i, j
 
+hsurf(:,:)=0
+
+!grid resolution thing (topography)
+if (Dx==500) then 
+	hsurf(Nx/2,:)=2000
+
+elseif (Dx==250) then
+	hsurf(Nx/2-1,:)=1000
+	hsurf(Nx/2,:)=2000
+	hsurf(Nx/2+1,:)=1000
+
+elseif (Dx==125) then
+	hsurf(Nx/2-2,:)=500
+	hsurf(Nx/2-1,:)=1000
+	hsurf(Nx/2,:)=2000
+	hsurf(Nx/2+1,:)=1000
+	hsurf(Nx/2+2,:)=500
+endif
+	
 !initial conditions set to 0
 h = 0
-u = 0
-v = 0
+u = 20
+v = 0 ! needs to be changed
 q = 0
 
-!create first perturbations
-h(Nx/2, Ny/2) = 2		!this creates a small bump in scale height towards the middle of the model
-
 end subroutine initgrid
+
+
 
 subroutine firststep()
 end subroutine firststep
