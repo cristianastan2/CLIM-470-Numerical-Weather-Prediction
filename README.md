@@ -1,4 +1,4 @@
 # CLIM-470
 
-GitHub  Reopository for CLIM 470 Numerical Wather Prediction class 
+GitHub  Reopository for CLIM 470 Numerical Weather Prediction class 
 
