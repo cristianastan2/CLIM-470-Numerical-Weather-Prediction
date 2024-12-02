@@ -18,11 +18,6 @@ print *, "Grid Resolution (km):", Dx
 print *, "X-Direction Grid Point #:", Nx
 print *, "Y-Direction Grid Point #:", Ny
 
-!calculate f
-degrees = 45.0
-latitude = degrees * 3.141592653589793 / 180.0
-f = 2.0 * 7.292e-5 * sin(latitude)              	!what is our latitude?? fairly certain fortran wants lat in radians
-
 !create Adams-Bashforth time differencing loop
 time = 0
 nstep = 100
@@ -95,7 +90,7 @@ subroutine thirdstep()
 end subroutine thirdstep
 
 subroutine math() !big subroutine to call all three main math nodes at the same time.
-end subroutine math()
+end subroutine math
 
 subroutine momentum()	!math for velocity (WIP)
 end subroutine momentum
@@ -106,10 +101,10 @@ endsubroutine height
 
 
 
-subroutine calculate_potential_vorticity(u, v, h, f, q, nx, ny)	!math for vorticity
+subroutine calculate_potential_vorticity(u, v, h, f, q, nx, ny, dx)	!math for vorticity
 implicit none
-real, intent(in) :: u(nx,ny), v(nx,ny), h(nx,ny), f(nx,ny)
-integer, intent(in) :: nx, ny
+real, intent(in) :: u(nx,ny), v(nx,ny), h(nx,ny), f(nx,ny), dx
+integer, intent(inout) :: nx, ny
 real, intent(out) :: q(nx,ny)
 real :: zeta(nx,ny) !relative vorticity
 
@@ -118,19 +113,19 @@ q = 0
 zeta = 0
 
 !relative vorticity calculation
-do j=2, ny-1
-	do i=2, nx-1
-		zeta(i,j) = (v(i+1,j)-v(i-1,j))/(dx) - (u(i,j+1)-u(i,j-1))/(dx)
+do ny=2, 1
+	do nx=2, 1
+		zeta(nx,ny) = (v(nx+1,ny)-v(nx-1,ny))/(dx) - (u(nx,ny+1)-u(nx,ny-1))/(dx)
 	end do
 end do
 
 !potential vorticity calculations
-do j=2, ny-1
-	do i=2, nx-1
-		if (h(i,j)>0.0) then !the >0 avoids divison by zero (just in case)
-			q(i,j) = (zeta(i,j) + f(i,j)) / h(i,j)
+do ny=2, 1
+	do nx=2, 1
+		if (h(nx,ny)>0.0) then !the >0 avoids divison by zero (just in case)
+			q(nx,ny) = (zeta(nx,ny) + f(nx,ny)) / h(nx,ny)
 		else
-			q(i,j) = 0.0
+			q(nx,ny) = 0.0
 		end if
 	end do
 end do
