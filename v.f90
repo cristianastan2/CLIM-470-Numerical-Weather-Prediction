@@ -36,12 +36,12 @@ q(Nx + 2,:) = q(2,:)
 ! calculate grid values for greek letters 
 do i=2, Nx + 1
     do j=2, Ny + 1
-        alpha(i,j) = ((1/24)*(2*q(i+1,j+1) + q(i,j+1) + 2*q(i,j) + q(i+1,j)))
-        beta(i,j) = ((1/24)*(q(i,j+1) + 2*q(i-1,j+1) + q(i-1,j) + 2*q(i,j)))
-        gamma(i,j) = ((1/24)*(2*q(i,j+1) + q(i-1,j+1) + 2*q(i-1,j) + q(i,j)))
-        delta(i,j) = ((1/24)*(q(i+1,j+1) + 2*q(i,j+1) + q(i,j) + 2*q(i+1,j)))
-        epsilon(i,j) = ((1/24)*(q(i+1,j+1) + q(i,j+1) - q(i,j) - q(i+1,j)))
-        phi(i,j) = ((1/24)*(-q(i+1,j+1) + q(i,j+1) + q(i,j) - q(i+1,j))) 
+        alpha(i,j) = ((1.0/24.0)*(2*q(i+1,j+1) + q(i,j+1) + 2*q(i,j) + q(i+1,j)))
+        beta(i,j) = ((1.0/24.0)*(q(i,j+1) + 2*q(i-1,j+1) + q(i-1,j) + 2*q(i,j)))
+        gamma(i,j) = ((1.0/24.0)*(2*q(i,j+1) + q(i-1,j+1) + 2*q(i-1,j) + q(i,j)))
+        delta(i,j) = ((1.0/24.0)*(q(i+1,j+1) + 2*q(i,j+1) + q(i,j) + 2*q(i+1,j)))
+        epsilon(i,j) = ((1.0/24.0)*(q(i+1,j+1) + q(i,j+1) - q(i,j) - q(i+1,j)))
+        phi(i,j) = ((1.0/24.0)*(-q(i+1,j+1) + q(i,j+1) + q(i,j) - q(i+1,j))) 
     end do
 end do 
 
