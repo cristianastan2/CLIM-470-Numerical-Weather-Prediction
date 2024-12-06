@@ -42,7 +42,7 @@ hu0(1,:,1) = (h(Nx,:) + h(2,:))/2.0
 hu0(Nx,:,1) = (h(Nx-1,:) + h(1,:))/2.0
 
 do i = 2, Nx-1
-	hu0(i,:,1) = ( (i-1,:) + h(i+1,:))/2.0
+	hu0(i,:,1) = (h(i-1,:) + h(i+1,:))/2.0
 end do
 
 hv0(:,1,1) = (h(:,Ny) + h(:,2))/2.0
@@ -64,20 +64,20 @@ do n = 2, 3
 			h(i,j) = h(i,j) - dT * (us0(i+1,j+1,n-1) - us0(i,j+1,n-1) + vs0(i+1,j+1,n-1) - vs0(i+1,j,n-1))/Dx
 			
 			u(i,j) = u(i,j) + dT * (alp0(i,j+1,n-1) * vs0(i,j,n-1) + bet0(i,j+1,n-1) * vs0(i-1,j+1,n-1) + &
-                        gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
+            gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
 			us0(i+1,j+1,n-1) + eps0(i-1,j+1,n-1) * us0(i-1,j+1,n-1) - (ken0(i+1,j+1,n-1) + &
 			ght0(i+1,j+1,n-1) - ken0(i-1,j+1,n-1) - ght0(i-1,j+1,n-1)) / Dx)
 			
-                        v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
-                        alp0(i,j-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
+            v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
+            alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
 			vs0(i+1,j+1,n-1) - phi0(i+1,j-1,n-1) * vs0(i+1,j-1,n-1) - (ken0(i+1,j+1,n-1) + &
-			ght0(i+1,j+1,n-1) - ken0(i+1,j-1,n-1) - phi(i+1,j-1,n-1)) / Dx)
+			ght0(i+1,j+1,n-1) - ken0(i+1,j-1,n-1) - phi0(i+1,j-1,n-1)) / Dx)
 			
 			! Update zeta (z)
 			zeta(i,j) = (u(i,j-1) - u(i,j+1) + v(i+1,j) - v(i-1,j)) / Dx
 			
 			! Update Potential Vorticity
-			q(i,j) = (f + zeta(i,j)) / h(i,j)
+			q(i,j) = (f(i,j) + zeta(i,j)) / h(i,j)
 			
 			! Compute Greek letters (alp0, bet0, gam0, del0, eps0)
 			alp0(i, j, n) = (1.0 / 24.0) * (2.0 * q(i+1, j+1) + q(i, j+1) + 2.0 * q(i, j) + q(i+1, j))
