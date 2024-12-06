@@ -59,8 +59,6 @@ epsilon(Nx + 2,:) = epsilon(2,:)
 phi(1,:) = phi(Nx + 1,:)
 phi(Nx + 2,:) = phi(2,:)
 
-! NOT FUNCTIONAL BELOW THIS LINE
-
 
 call initgrid(h, u, v, q, hsurf)
 
