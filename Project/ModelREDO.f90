@@ -16,7 +16,6 @@ real, dimension(Nx, Ny, 3) :: alp0, bet0, gam0, del0, eps0, ken0, ght0, q0, z0, 
 real, parameter :: g = 9.81, f = 1.0e-4 !Constants
 
 
-
 !showcase model info
 print *, "Grid Type: C"
 print *, "Domain (km):", Lx, Ly
@@ -53,6 +52,22 @@ end do
 ! Time differencing for u and v velocities
 us0(:,:,1)= hu0(:,:,1)*u(:,:)
 vs0(:,:,1) = hv0(:,:,1)*v(:,:)
+
+do i = 1, Nx
+	z0(i,1)=0.
+	z0(i,Ny)=0.
+end do
+
+do j=2,Ny-1
+	z0(1,j,1)=(u(1,j-1)-u(1,j+1)+v(2,j)-v(Nx,j))/Dx
+	z0(Nx,j,1)=(u(Nx,j-1)-u(1,j+1)+v(1,j)-v(Nx-1,j))/Dx
+end do
+
+do i=2,Nx-1
+	do j=2,Ny-1
+		z0(i,j,1)=(u(i,j-1)-u(i,j+1)+v(i+1,j)-v(i-1,j))/Dx
+	end do
+end do
 
 !Initial conditions, t = 0
 hq0(1,1,1)=(h(1,1) + h(Nx,1))/2.0
@@ -99,7 +114,7 @@ do i = 1, Nx-1
 	end do
 end do
 
-!!! We can print out the initial conditions
+! We can print out the initial conditions
 
 
 ! Time-stepping loop
@@ -110,12 +125,12 @@ do n = 2, 3
 			h(i,j) = h(i,j) - dT * (us0(i+1,j+1,n-1) - us0(i,j+1,n-1) + vs0(i+1,j+1,n-1) - vs0(i+1,j,n-1))/Dx
 			
 			u(i,j) = u(i,j) + dT * (alp0(i,j+1,n-1) * vs0(i,j,n-1) + bet0(i,j+1,n-1) * vs0(i-1,j+1,n-1) + &
-                        gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
+            gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
 			us0(i+1,j+1,n-1) + eps0(i-1,j+1,n-1) * us0(i-1,j+1,n-1) - (ken0(i+1,j+1,n-1) + &
 			ght0(i+1,j+1,n-1) - ken0(i-1,j+1,n-1) - ght0(i-1,j+1,n-1)) / Dx)
 			
-                        v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
-                        alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
+            v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
+            alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
 			vs0(i+1,j+1,n-1) - phi0(i+1,j-1,n-1) * vs0(i+1,j-1,n-1) - (ken0(i+1,j+1,n-1) + &
 			ght0(i+1,j+1,n-1) - ken0(i+1,j-1,n-1) - phi0(i+1,j-1,n-1)) / Dx)
 			
@@ -152,9 +167,69 @@ hv0(:,Ny,n) = (h(:,Ny-1) + h(:,1))/2.0
 	do j = 2, Ny-1
 	hv0(:,j,n) = ( h(:,j-1) + h(:,j+1) )/2.0
 	end do
-	
+
+!Update us0 and vs0 for the next time step
 us0(:,:,n)= hu0(:,:,n)*u(:,:)
 vs0(:,:,n) = hv0(:,:,n)*v(:,:)
+
+! Update z0 for the next time step
+	do j=2,Ny-1
+
+	z0(1,j,n)=(u(1,j-1)-u(1,j+1)+v(2,j)-v(Nx,j))/Dx
+	z0(Nx,j,n)=(u(Nx,j-1)-u(1,j+1)+v(1,j)-v(Nx-1,j))/Dx
+
+	end do
+	
+! Update h10 for the next time step
+do j = 2, Ny-1
+   do i = 2, Nx
+      hq0(i, j, n) = (h(i, j) + h(i-1, j) + h(i-1, j-1) + h(i, j-1)) / 4.0
+   end do
+end do
+
+! Update q0 for the next time step 
+
+q0(:,:,n) = (f+z0(:,:,n))/hq0(:,:,n)
+
+! update ght0 for the next time step
+	do i = 1, Nx
+	ght0(i,:,n) = g*(h(i,:)+hsurf(i,:))
+	end do
+	
+! Update ken0 for the next time step
+ken0(:,:,n)=(u(:,:)*u(:,:) + v(:,:)*v(:,:))/2
+
+!Update previous values prior to next time step
+us1(:,:) = us0(:,:,1)
+us2(:,:) = us0(:,:,2)
+us3(:,:) = us0(:,:,3)
+hu1(:,:) = h0(:,:,1)
+hu2(:,:) = h0(:,:,2)
+hu3(:,:) = h0(:,:,3)
+hv1(:,:) = hv0(:,:,1)
+hv2(:,:)= hv0(:,:,2)
+hv3(:,:) = hv0(:,:,3)
+alp1(:,:) = alp0(:,:,1)
+alp2(:,:) = alp0(:,:,2)
+alp3(:,:)= alp0(:,:,3)
+bet1(:,:) = bet0(:,:,1)
+bet2(:,:) = bet0(:,:,2)
+bet3(:,:)= bet0(:,:,3)
+gam1(:,:) = gam0(:,:,1)
+gam2(:,:) = gam0(:,:,2)
+gam3(:,:)= gam0(:,:,3)
+del1(:,:) = del0(:,:,1)
+del2(:,:) = del0(:,:,2)
+del3(:,:)= del0(:,:,3)
+eps1(:,:) = eps0(:,:,1)
+eps2(:,:) = eps0(:,:,2)
+eps3(:,:)= eps0(:,:,3)
+ken1(:,:) = ken0(:,:,1)
+ken2(:,:) = ken0(:,:,2)
+ken3(:,:)= ken0(:,:,3)
+ght1(:,:) = ght0(:,:,1)
+ght2(:,:) = ght0(:,:,2)
+ght3(:,:)= ght0(:,:,3)
 
 end do
 
@@ -181,7 +256,7 @@ integer :: i, j
 
 hsurf(:,:)=0
 
-!grid resolution thing (topography)
+!grid resolution thing (topography) NEEDS ADJUSTMENT BASED ON PREVIOUS MISTAKE
 if (Dx==500) then 
 	hsurf(Nx/2,:)=2000
 
