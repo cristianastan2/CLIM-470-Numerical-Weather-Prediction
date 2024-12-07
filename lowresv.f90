@@ -76,14 +76,14 @@ hsurf(:,:)=0
 
 !grid resolution thing (topography)
 
-hsurf(Nx/2+1,:) = 2000
+hsurf((Nx+2)/2+1,:) = 2000
 if (Dx==250) then
-    hsurf(Nx/2,:) = 1000
-    hsurf(Nx/2+2:) = 1000
+    hsurf((Nx+2)/2,:) = 1000
+    hsurf((Nx+2)/2+2:) = 1000
 endif
 if (Dx==125) then
-    hsurf(Nx/2-1,:) = 500
-    hsurf(Nx/2+3,:) = 500
+    hsurf((Nx+2)/2-1,:) = 500
+    hsurf((Nx+2)/2+3,:) = 500
 endif
 	
 !initial conditions set to 0
