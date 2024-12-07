@@ -6,14 +6,14 @@ real, parameter :: Lx = 6000, Ly = 2000                 !domain in km
 real, parameter :: Dx = 500                   !grid resolution in km
 real, parameter :: dT = 100                             !time step, 100 seconds
 integer, parameter :: Nx = (Lx/Dx), Ny = (Ly/Dx)        !create grid points for array
-integer :: i, j, t, latitude, degrees, n                !define other potentially important variables
+integer :: i, j, t, n                !define other potentially important variables
 real :: time                                            !TIME
 
-real, dimension(Nx, Ny) :: h, u, v, q, f, hsurf, lq, zeta, ght, ken   !array creation with internal variables for each point
+real, dimension(Nx, Ny) :: h, u, v, q, hsurf, lq, zeta, ght, ken   !array creation with internal variables for each point
 real, dimension(Nx, Ny, 3) :: hu0, hv0, hq0, us0, vs0, h0 ! Variables for time differencing
 real, dimension(Nx, Ny) :: hu1, hu2, hu3, hv1, hv2, hv3, us1, us2, us3, vs1, vs2, vs3
-!Variables for energy and flux calculations 
 real, dimension(Nx, Ny, 3) :: alp0, bet0, gam0, del0, eps0, ken0, ght0, q0, z0, phi0
+real, parameter :: g = 9.81, f = 1.0e-4 !Constants
 
 
 
@@ -24,8 +24,6 @@ print *, "Grid Resolution (km):", Dx
 print *, "X-Direction Grid Point #:", Nx
 print *, "Y-Direction Grid Point #:", Ny
 
-!calculate f
-f = 10e-04             	!f is going to be constant f = 10e-04 based off the psuedocode
 
 ! Set initial conditions
 u(1:Nx,1:Ny) = 20 ! uniform zonal wind
@@ -56,6 +54,54 @@ end do
 us0(:,:,1)= hu0(:,:,1)*u(:,:)
 vs0(:,:,1) = hv0(:,:,1)*v(:,:)
 
+!Initial conditions, t = 0
+hq0(1,1,1)=(h(1,1) + h(Nx,1))/2.0
+hq0(1,Ny,1)=(h(1,Ny-1) + h(Nx,Ny-2))/2.0
+
+do i = 2,Nx
+	hq0(i,1,1)=(h(i,1) + h(i-1,1))/2.0
+	hq0(i,Ny,1)=(h(i,Ny-1) + h(i-1,Ny-1))/2.0
+end do
+
+do j = 2,Ny-1
+	hq0(1,j,1)=(h(1,j) + h(i-1,j) + h(Nx,j) + h(Nx-1,j-1))/4.0
+end do
+
+do j = 2,Ny-1
+	do i = 2,Nx
+		hq0(i,j,1)=(h(i,j) + h(i-1,j) + h(i-1,j-1) + h(i,j-1))/4.0
+	end do
+end do
+
+do j = 1,Ny
+	do i = 1,Nx
+		q0(i,j,1)=(z0(i,j,1) + f)/hq0(i,j,1)
+	end do
+end do
+
+do i = 1,Nx
+	do j = 1, Ny
+		ght0(i,j,1) = g*(hsurf(i,j) + h(i,j))
+	end do
+end do
+
+do i = 1, Nx
+	ken0(i,Ny,1)=0.
+end do
+
+do j = 1,Ny-1
+	ken0(Nx,j,1)=(u(Nx-1,j)**2 + u(1,j)**2 + v(Nx-1,j)**2 + v(1,Ny)**2)/4.
+end do
+
+do i = 1, Nx-1
+	do j = 1, Ny-1
+		ken0(i,j,1)=(u(i,j)**2 + u(i+1,j)**2 + v(i,j)**2 + v(1,j+1)**2)/4.
+	end do
+end do
+
+!!! We can print out the initial conditions
+
+
 ! Time-stepping loop
 do n = 2, 3
 	do i = 2, Nx-1
@@ -64,12 +110,12 @@ do n = 2, 3
 			h(i,j) = h(i,j) - dT * (us0(i+1,j+1,n-1) - us0(i,j+1,n-1) + vs0(i+1,j+1,n-1) - vs0(i+1,j,n-1))/Dx
 			
 			u(i,j) = u(i,j) + dT * (alp0(i,j+1,n-1) * vs0(i,j,n-1) + bet0(i,j+1,n-1) * vs0(i-1,j+1,n-1) + &
-            gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
+                        gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
 			us0(i+1,j+1,n-1) + eps0(i-1,j+1,n-1) * us0(i-1,j+1,n-1) - (ken0(i+1,j+1,n-1) + &
 			ght0(i+1,j+1,n-1) - ken0(i-1,j+1,n-1) - ght0(i-1,j+1,n-1)) / Dx)
 			
-            v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
-            alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
+                        v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
+                        alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
 			vs0(i+1,j+1,n-1) - phi0(i+1,j-1,n-1) * vs0(i+1,j-1,n-1) - (ken0(i+1,j+1,n-1) + &
 			ght0(i+1,j+1,n-1) - ken0(i+1,j-1,n-1) - phi0(i+1,j-1,n-1)) / Dx)
 			
@@ -77,7 +123,7 @@ do n = 2, 3
 			zeta(i,j) = (u(i,j-1) - u(i,j+1) + v(i+1,j) - v(i-1,j)) / Dx
 			
 			! Update Potential Vorticity
-			q(i,j) = (f(i,j) + zeta(i,j)) / h(i,j)
+			q(i,j) = (f + zeta(i,j)) / h(i,j)
 			
 			! Compute Greek letters (alp0, bet0, gam0, del0, eps0)
 			alp0(i, j, n) = (1.0 / 24.0) * (2.0 * q(i+1, j+1) + q(i, j+1) + 2.0 * q(i, j) + q(i+1, j))
@@ -88,6 +134,7 @@ do n = 2, 3
 	  
 		end do
 	end do
+
 
 ! Update hu0 and hv0 for next time step 
 hu0(1,:,n) = (h(Nx,:) + h(2,:))/2.0
@@ -158,4 +205,3 @@ v = 0 ! needs to be changed
 q = 0
 
 end subroutine initgrid
-
