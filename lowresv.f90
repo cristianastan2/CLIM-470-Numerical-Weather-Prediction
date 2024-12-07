@@ -1,4 +1,4 @@
-program v
+program meridional
 
 ! initialize all variables
 implicit none
@@ -12,6 +12,10 @@ real, dimension(Nx + 2, Ny + 2) :: gamma
 real, dimension(Nx + 2, Ny + 2) :: delta
 real, dimension(Nx + 2, Ny + 2) :: epsilon
 real, dimension(Nx + 2, Ny + 2) :: phi
+real, dimension(Nx + 2, Ny + 2) :: u
+real, dimension(Nx + 2, Ny + 2) :: v
+real, dimension(Nx + 2, Ny + 2) :: h
+real, dimension(Nx + 2, Ny + 2) :: hsurf
 
 ! make all arrays all zeros
 q = 0
@@ -62,36 +66,41 @@ phi(Nx + 2,:) = phi(2,:)
 
 call initgrid(h, u, v, q, hsurf)
 
+end program meridional
+
 subroutine initgrid(h, u, v, q, hsurf)	!creates grid, ridge, and topography.
-implicit none
+    implicit none
+  
+    real, parameter :: Lx = 6000, Ly = 2000
+    real, parameter :: Dx = 500
+    integer, parameter :: Nx = (Lx/Dx) + 1, Ny = (Ly/Dx) + 1
 
-real, parameter :: Lx = 6000, Ly = 2000
-real, parameter :: Dx = 500
-integer, parameter :: Nx = (Lx/Dx) + 1, Ny = (Ly/Dx) + 1
+    real, dimension(Nx+2,Ny+2), intent(out) :: h, u, v, q, hsurf
+    integer :: i, j
 
-real, dimension(Nx+2,Ny+2), intent(out) :: h, u, v, q, hsurf
-integer :: i, j
+    hsurf(:,:)=0
 
-hsurf(:,:)=0
+    !grid resolution thing (topography)
 
-!grid resolution thing (topography)
-
-hsurf((Nx+2)/2+1,:) = 2000
-if (Dx==250) then
-    hsurf((Nx+2)/2,:) = 1000
-    hsurf((Nx+2)/2+2:) = 1000
-endif
-if (Dx==125) then
-    hsurf((Nx+2)/2-1,:) = 500
-    hsurf((Nx+2)/2+3,:) = 500
-endif
+    hsurf((Nx+2)/2+1,:) = 2000
+    if (Dx==250) then
+        hsurf((Nx+2)/2,:) = 1000
+        hsurf((Nx+2)/2+2,:) = 1000
+    endif
+    if (Dx==125) then
+        hsurf((Nx+2)/2-1,:) = 500
+        hsurf((Nx+2)/2+3,:) = 500
+    endif
 	
-!initial conditions set to 0
-h = 0
-u = 20 
-v = 0.5 
-q = 0
+    !initial conditions set to 0
+    h = 0
+    u = 20 
+    v = 0.5 
+    q = 0
 
-end subroutine initgrid
+    u(:,Ny+2) = 0
+    u(:,1) = 0
+    v(:,Ny+2) = 0
+    v(:,1) = 0
 
-end program v
+    end subroutine initgrid
