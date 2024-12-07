@@ -13,8 +13,13 @@ real, dimension(Nx, Ny) :: h, u, v, q, hsurf, lq, zeta, ght, ken   !array creati
 real, dimension(Nx, Ny, 3) :: hu0, hv0, hq0, us0, vs0, h0 ! Variables for time differencing
 real, dimension(Nx, Ny) :: hu1, hu2, hu3, hv1, hv2, hv3, us1, us2, us3, vs1, vs2, vs3
 real, dimension(Nx, Ny, 3) :: alp0, bet0, gam0, del0, eps0, ken0, ght0, q0, z0, phi0
-real, parameter :: g = 9.81, f = 1.0e-4 !Constants
 
+!Variables for further time-stepping
+real, dimension(Nx, Ny) :: alp1, alp2, alp3, bet1, bet2, bet3
+real, dimension(Nx, Ny) :: gam1, gam2, gam3, del1, del2, del3
+real, dimension(Nx, Ny) :: eps1, eps2, eps3, ken1, ken2, ken3
+real, dimension(Nx, Ny) :: ght1, ght2, ght3
+real, parameter :: g = 9.81, f = 1.0e-4 !Constants
 
 !showcase model info
 print *, "Grid Type: C"
@@ -54,8 +59,8 @@ us0(:,:,1)= hu0(:,:,1)*u(:,:)
 vs0(:,:,1) = hv0(:,:,1)*v(:,:)
 
 do i = 1, Nx
-	z0(i,1)=0.
-	z0(i,Ny)=0.
+	z0(i,1,1)=0.
+	z0(i,Ny,1)=0.
 end do
 
 do j=2,Ny-1
@@ -125,12 +130,12 @@ do n = 2, 3
 			h(i,j) = h(i,j) - dT * (us0(i+1,j+1,n-1) - us0(i,j+1,n-1) + vs0(i+1,j+1,n-1) - vs0(i+1,j,n-1))/Dx
 			
 			u(i,j) = u(i,j) + dT * (alp0(i,j+1,n-1) * vs0(i,j,n-1) + bet0(i,j+1,n-1) * vs0(i-1,j+1,n-1) + &
-            gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
+                        gam0(i,j+1,n-1) * vs0(i-1,j,n-1) + del0(i,j+1,n-1) * vs0(i+1,j,n-1) - eps0(i+1,j+1,n-1) * &
 			us0(i+1,j+1,n-1) + eps0(i-1,j+1,n-1) * us0(i-1,j+1,n-1) - (ken0(i+1,j+1,n-1) + &
 			ght0(i+1,j+1,n-1) - ken0(i-1,j+1,n-1) - ght0(i-1,j+1,n-1)) / Dx)
 			
-            v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
-            alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
+                        v(i,j) = v(i,j) - dT * (gam0(i+1,j+1,n-1) * us0(i+1,j+1,n-1) + del0(i,j+1,n-1) * us0(i,j+1,n-1) + &
+                        alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i+1,j+1,n-1) * &
 			vs0(i+1,j+1,n-1) - phi0(i+1,j-1,n-1) * vs0(i+1,j-1,n-1) - (ken0(i+1,j+1,n-1) + &
 			ght0(i+1,j+1,n-1) - ken0(i+1,j-1,n-1) - phi0(i+1,j-1,n-1)) / Dx)
 			
@@ -203,30 +208,39 @@ ken0(:,:,n)=(u(:,:)*u(:,:) + v(:,:)*v(:,:))/2
 us1(:,:) = us0(:,:,1)
 us2(:,:) = us0(:,:,2)
 us3(:,:) = us0(:,:,3)
+
 hu1(:,:) = h0(:,:,1)
 hu2(:,:) = h0(:,:,2)
 hu3(:,:) = h0(:,:,3)
+
 hv1(:,:) = hv0(:,:,1)
 hv2(:,:)= hv0(:,:,2)
 hv3(:,:) = hv0(:,:,3)
+
 alp1(:,:) = alp0(:,:,1)
 alp2(:,:) = alp0(:,:,2)
 alp3(:,:)= alp0(:,:,3)
+
 bet1(:,:) = bet0(:,:,1)
 bet2(:,:) = bet0(:,:,2)
 bet3(:,:)= bet0(:,:,3)
+
 gam1(:,:) = gam0(:,:,1)
 gam2(:,:) = gam0(:,:,2)
 gam3(:,:)= gam0(:,:,3)
+
 del1(:,:) = del0(:,:,1)
 del2(:,:) = del0(:,:,2)
 del3(:,:)= del0(:,:,3)
+
 eps1(:,:) = eps0(:,:,1)
 eps2(:,:) = eps0(:,:,2)
 eps3(:,:)= eps0(:,:,3)
+
 ken1(:,:) = ken0(:,:,1)
 ken2(:,:) = ken0(:,:,2)
 ken3(:,:)= ken0(:,:,3)
+
 ght1(:,:) = ght0(:,:,1)
 ght2(:,:) = ght0(:,:,2)
 ght3(:,:)= ght0(:,:,3)
