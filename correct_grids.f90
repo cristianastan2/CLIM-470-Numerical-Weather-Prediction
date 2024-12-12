@@ -10,17 +10,17 @@ integer, parameter :: Nx = (Lx/Dx) + 3, Ny = (Ly/Dx) + 3        !create grid poi
 integer :: i, j, t, n                !define other potentially important variables
 real :: time                                            !TIME
 
-real, dimension(Nx, Ny) :: h, u, v, q, hsurf, lq, zeta, ght, ken   !array creation with internal variables for each point
+real, dimension(Nx, Ny) :: h, u, v, q, hsurf, lq, zeta, ght, ken, pen   !array creation with internal variables for each point
 real, dimension(Nx, Ny, 3) :: hu0, hv0, hq0, us0, vs0, h0 ! Variables for time differencing
 real, dimension(Nx, Ny) :: hu1, hu2, hu3, hv1, hv2, hv3, us1, us2, us3, vs1, vs2, vs3, hu, hv, us, vs
-real, dimension(Nx, Ny, 3) :: alp0, bet0, gam0, del0, eps0, ken0, ght0, q0, z0, phi0
+real, dimension(Nx, Ny, 3) :: alp0, bet0, gam0, del0, eps0, ken0, ght0, q0, z0, phi0, totalen0
 real, dimension(Nx, Ny, 3) :: u0, v0 
 
 !Variables for further time-stepping
 real, dimension(Nx, Ny) :: alp1, alp2, alp3, bet1, bet2, bet3
 real, dimension(Nx, Ny) :: gam1, gam2, gam3, del1, del2, del3
 real, dimension(Nx, Ny) :: eps1, eps2, eps3, ken1, ken2, ken3
-real, dimension(Nx, Ny) :: ght1, ght2, ght3, phi1, phi2, phi3
+real, dimension(Nx, Ny) :: ght1, ght2, ght3, phi1, phi2, phi3, totalen1, totalen2, totalen3
 real, parameter :: g = 9.81, f = 1.0e-4, f1 = (23.0/12.0), f2 = (4.0/3.0), f3 = (5.0/12.0)	!Constants
 
 !showcase model info
@@ -57,6 +57,7 @@ hq0(:,:,1) = 0.0
 ght0(:,:,1) = 0.0
 ken0(:,:,1) = 0.0
 q0(:,:,1) = 0.0 
+totalen0(:,:,1) = 0.0
 
 do i = 2, Nx-1
     do j = 2, Ny-1
@@ -93,6 +94,11 @@ hq0(Nx,:,1) = hq0(2,:,1)
 
 ght0(1,:,1) = ght0(Nx-1,:,1) 
 ght0(Nx,:,1) = ght0(2,:,1) 
+
+ken0(1,:,1) = ken0(Nx-1,:,1)
+ken0(Nx,:,1) = ken0(2,:,1)
+
+totalen0(:,:,1) = ken0(:,:,1) + ght0(:,:,1)
 
 ! We can print out the initial conditions
 
@@ -140,6 +146,8 @@ do n = 2, 3
 	  
 		end do
 	end do
+
+	totalen0(:,:,n) = ken0(:,:,n) + ght0(:,:,n)	
 
 	us0(2:Nx-1,2:Ny-1,n)= hu0(2:Nx-1,2:Ny-1,n)*u0(2:Nx-1,2:Ny-1,n)
 	vs0(2:Nx-1,2:Ny-1,n)= hv0(2:Nx-1,2:Ny-1,n)*v0(2:Nx-1,2:Ny-1,n)
@@ -262,7 +270,6 @@ do n = 4, ntime
 	us(2:Nx-1,2:Ny-1)= hu(2:Nx-1,2:Ny-1)*u(2:Nx-1,2:Ny-1)
         vs(2:Nx-1,2:Ny-1)= hv(2:Nx-1,2:Ny-1)*v(2:Nx-1,2:Ny-1)
 
-
         h(1,:) = h(Nx-1,:)
         h(Nx,:) = h(2,:)
 	u(1,:) = u(Nx-1,:)
@@ -298,6 +305,10 @@ do n = 4, ntime
 	hv3 = hv
 
 end do 
+
+totalen1(:,:) = ken1(:,:) + ght1(:,:)
+totalen2(:,:) = ken2(:,:) + ght2(:,:)
+totalen3(:,:) = ken3(:,:) + ght3(:,:)
 
 ! We probably have to print something or write something here
 
