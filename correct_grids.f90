@@ -59,6 +59,13 @@ ken0(:,:,1) = 0.0
 q0(:,:,1) = 0.0 
 totalen0(:,:,1) = 0.0
 
+alp0(:,:,1) = 0.0
+bet0(:,:,1) = 0.0
+gam0(:,:,1) = 0.0
+del0(:,:,1) = 0.0
+eps0(:,:,1) = 0.0
+phi0(:,:,1) = 0.0 
+
 do i = 2, Nx-1
     do j = 2, Ny-1
         hu0(i,j,1) = (h(i-1,j) + h(i+1,j))/2.0
@@ -66,7 +73,7 @@ do i = 2, Nx-1
         z0(i,j,1)=(u(i,j-1)-u(i,j+1)+v(i+1,j)-v(i-1,j))/Dxm
         hq0(i,j,1)=(h(i,j) + h(i-1,j) + h(i-1,j-1) + h(i,j-1))/4.0
         ght0(i,j,1) = g*(hsurf(i,j) + h(i,j))
-        ken0(i,j,1)=(u(i,j)**2 + u(i+1,j)**2 + v(i,j)**2 + v(1,j+1)**2)/4.
+        ken0(i,j,1)=(u(i,j)**2 + u(i+1,j)**2 + v(i,j)**2 + v(i,j+1)**2)/4.
     end do
 end do 
 
@@ -110,14 +117,6 @@ do n = 2, 3
 		
 			h0(i,j,n) = h0(i,j,n-1) - dT * (us0(i+1,j,n-1) - us0(i,j,n-1) + vs0(i,j+1,n-1) - vs0(i,j,n-1))/Dxm
 			
-			! Compute Greek letters
-                        alp0(i, j, n) = ((1.0/24.0)*(2*q0(i+1,j+1,n-1) + q0(i,j+1,n-1) + 2*q0(i,j,n-1) + q0(i+1,j,n-1)))
-        		bet0(i, j, n) = ((1.0/24.0)*(q0(i,j+1,n-1) + 2*q0(i-1,j+1,n-1) + q0(i-1,j,n-1) + 2*q0(i,j,n-1)))
-        		gam0(i, j, n) = ((1.0/24.0)*(2*q0(i,j+1,n-1) + q0(i-1,j+1,n-1) + 2*q0(i-1,j,n-1) + q0(i,j,n-1)))
-        		del0(i, j, n) = ((1.0/24.0)*(q0(i+1,j+1,n-1) + 2*q0(i,j+1,n-1) + q0(i,j,n-1) + 2*q0(i+1,j,n-1)))
-        		eps0(i, j, n) = ((1.0/24.0)*(q0(i+1,j+1,n-1) + q0(i,j+1,n-1) - q0(i,j,n-1) - q0(i+1,j,n-1)))
-        		phi0(i, j, n) = ((1.0/24.0)*(-q0(i+1,j+1,n-1) + q0(i,j+1,n-1) + q0(i,j,n-1) - q0(i+1,j,n-1))) 
-			
 			! Calculate u
    			u0(i,j,n) = u0(i,j,n-1) + dT * (alp0(i,j,n-1) * vs0(i,j+1,n-1) + bet0(i,j,n-1) * vs0(i-1,j+1,n-1) + &
                         gam0(i,j,n-1) * vs0(i-1,j,n-1) + del0(i,j,n-1) * vs0(i,j,n-1) - eps0(i,j,n-1) * &
@@ -131,18 +130,27 @@ do n = 2, 3
 			ght0(i,j,n-1) - ken0(i,j-1,n-1) - ght0(i,j-1,n-1)) / Dxm)
 			
 			! Calculate zeta (z0)
-			z0(i,j,n) = (u0(i,j-1,n-1) - u0(i,j,n-1) + v0(i,j,n-1) - v0(i-1,j,n-1)) / Dxm
+			z0(i,j,n) = (u0(i,j-1,n) - u0(i,j,n) + v0(i,j,n) - v0(i-1,j,n)) / Dxm
 			
+			! hu0, hv0, and hq0 
+			hu0(i,j,n) = (h0(i-1,j,n) + h0(i+1,j,n))/2.0
+                        hv0(i,j,n) = (h0(i,j-1,n) + h0(i,j+1,n))/2.0
+                        hq0(i,j,n)=(h0(i,j,n) + h0(i-1,j,n) + h0(i-1,j-1,n) + h0(i,j-1,n))/4.0
+
 			! Calculate Potential Vorticity
-			q0(i,j,n) = (f + z0(i,j,n-1)) / hq0(i,j,n-1)
+			q0(i,j,n) = (f + z0(i,j,n)) / hq0(i,j,n)
+
+			! Compute Greek letters
+                        alp0(i, j, n) = ((1.0/24.0)*(2*q0(i+1,j+1,n) + q0(i,j+1,n) + 2*q0(i,j,n) + q0(i+1,j,n)))
+                        bet0(i, j, n) = ((1.0/24.0)*(q0(i,j+1,n) + 2*q0(i-1,j+1,n) + q0(i-1,j,n) + 2*q0(i,j,n)))
+                        gam0(i, j, n) = ((1.0/24.0)*(2*q0(i,j+1,n) + q0(i-1,j+1,n) + 2*q0(i-1,j,n) + q0(i,j,n)))
+                        del0(i, j, n) = ((1.0/24.0)*(q0(i+1,j+1,n) + 2*q0(i,j+1,n) + q0(i,j,n) + 2*q0(i+1,j,n)))
+                        eps0(i, j, n) = ((1.0/24.0)*(q0(i+1,j+1,n) + q0(i,j+1,n) - q0(i,j,n) - q0(i+1,j,n)))
+                        phi0(i, j, n) = ((1.0/24.0)*(-q0(i+1,j+1,n) + q0(i,j+1,n) + q0(i,j,n) - q0(i+1,j,n)))
 
 			! Update everything else
-			hu0(i,j,n) = (h0(i-1,j,n-1) + h0(i+1,j,n-1))/2.0
-        		hv0(i,j,n) = (h0(i,j-1,n-1) + h0(i,j+1,n-1))/2.0
-        		z0(i,j,n)=(u0(i,j-1,n-1)-u0(i,j+1,n-1)+v0(i+1,j,n-1)-v0(i-1,j,n-1))/Dxm
-        		hq0(i,j,n)=(h0(i,j,n-1) + h0(i-1,j,n-1) + h0(i-1,j-1,n-1) + h0(i,j-1,n-1))/4.0
-        		ght0(i,j,n) = g*(hsurf(i,j) + h0(i,j,n-1))
-        		ken0(i,j,n)=(u0(i,j,n-1)**2 + u0(i+1,j,n-1)**2 + v0(i,j,n-1)**2 + v0(1,j+1,n-1)**2)/4.
+        		ght0(i,j,n) = g*(hsurf(i,j) + h0(i,j,n))
+        		ken0(i,j,n)=(u0(i,j,n)**2 + u0(i+1,j,n)**2 + v0(i,j,n)**2 + v0(i,j+1,n)**2)/4.
 	  
 		end do
 	end do
@@ -185,7 +193,14 @@ do n = 2, 3
 	q0(Nx,:,n) = q0(2,:,n) 
 
 	h0(1,:,n) = h0(Nx-1,:,n) 
-	h0(Nx,:,n) = h0(2,:,n) 
+	h0(Nx,:,n) = h0(2,:,n)
+
+	u0(1,:,n) = u0(Nx-1,:,n)
+        u0(Nx,:,n) = u0(2,:,n)
+
+	v0(1,:,n) = v0(Nx-1,:,n)
+        v0(Nx,:,n) = v0(2,:,n)
+ 
 
 end do ! time loop
 
