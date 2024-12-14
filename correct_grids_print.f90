@@ -5,7 +5,7 @@ implicit none
 integer, parameter :: Lx = 6000, Ly = 2000                 !domain in km
 integer, parameter :: Dx = 125, Dxm = Dx*1000                   !grid resolution 
 real, parameter :: dT = 100                             !time step, 100 seconds
-integer, parameter :: ntime = 100			!time step as an integer because otherwise the do loop gets mad
+integer, parameter :: ntime = 86400			!time step as an integer because otherwise the do loop gets mad
 integer :: nstep
 integer, parameter :: Nx = (Lx/Dx) + 3, Ny = (Ly/Dx) + 3        !create grid points for array
 integer :: i, j, t, n, irec               !define other potentially important variables
@@ -269,6 +269,12 @@ ght3(:,:)= ght0(:,:,3)
 
 ! Adams-Bashforth scheme
 
+!Open files for printing
+open(unit=30, file='h.dat', access='direct', form='unformatted', status='unknown', action='write', recl=4*(Nx-2)*(Ny-2))
+open(unit=35, file='u.dat', access='direct', form='unformatted', status='unknown', action='write', recl=4*(Nx-2)*(Ny-2))  
+open(unit=40, file='v.dat', access='direct', form='unformatted', status='unknown', action='write', recl=4*(Nx-2)*(Ny-2))              
+            
+
 nstep = 4
 
 do n = 4, ntime
@@ -339,11 +345,29 @@ nstep = nstep + 1
 	hv2 = hv3
 	hv3 = hv
 
+if (nstep==1440) then
+write(30, rec=1) h(2:Nx-1,2:Ny-1)
+write(35, rec=1) u(2:Nx-1,2:Ny-1)
+write(40, rec=1) v(2:Nx-1,2:Ny-1)
+nstep = 0
+end if
+
+
 end do 
 
 totalen1(:,:) = ken1(:,:) + ght1(:,:)
 totalen2(:,:) = ken2(:,:) + ght2(:,:)
 totalen3(:,:) = ken3(:,:) + ght3(:,:)
+
+open(unit=45, file='totalen.dat', access='direct', form='unformatted', status='unknown', action='write', recl=4*(Nx-2)*(Ny-2))
+irec=0
+do n=1,3
+        irec=irec+1
+        write(45, rec=irec) totalen0(2:Nx-1,2:Ny-1,n)
+end do
+
+
+
 
 ! We probably have to print something or write something here
 
