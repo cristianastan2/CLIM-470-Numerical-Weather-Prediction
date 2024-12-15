@@ -5,7 +5,7 @@ implicit none
 integer, parameter :: Lx = 6000, Ly = 2000                 !domain in km
 integer, parameter :: Dx = 500, Dxm = Dx*1000                   !grid resolution 
 real, parameter :: dT = 100                             !time step, 100 seconds
-integer, parameter :: ntime = 100			!time step as an integer because otherwise the do loop gets mad
+integer, parameter :: ntime = 864			!time step as an integer because otherwise the do loop gets mad
 integer, parameter :: Nx = (Lx/Dx) + 3, Ny = (Ly/Dx) + 3        !create grid points for array
 integer :: i, j, t, n                !define other potentially important variables
 real :: time                                            !TIME
@@ -21,7 +21,7 @@ real, dimension(Nx, Ny) :: alp1, alp2, alp3, bet1, bet2, bet3
 real, dimension(Nx, Ny) :: gam1, gam2, gam3, del1, del2, del3
 real, dimension(Nx, Ny) :: eps1, eps2, eps3, ken1, ken2, ken3
 real, dimension(Nx, Ny) :: ght1, ght2, ght3, phi1, phi2, phi3, totalen1, totalen2, totalen3
-real, parameter :: g = 9.81, f = 1.0e-4, f1 = (23.0/12.0), f2 = (4.0/3.0), f3 = (5.0/12.0)	!Constants
+real, parameter :: g = 9.81, f = 1.0e-4, f1 = (23.0/12.0)*dT, f2 = (4.0/3.0*dT), f3 = (5.0/12.0)*dT	!Constants
 
 !showcase model info
 print *, "Grid Type: C"
@@ -34,7 +34,7 @@ call initgrid(hsurf, Dx, Nx, Ny)
 
 ! Set initial conditions 
 u(:,:) = 0.0 
-u(1:Nx,2:Ny-1) = 20 ! uniform zonal wind
+u(1:Nx,2:Ny-1) = 20.0 ! uniform zonal wind
 v(:,:) = 0.0 
 v(1:Nx,2:Ny-1) = 0.1
 
@@ -59,6 +59,7 @@ ken0(:,:,1) = 0.0
 q0(:,:,1) = 0.0 
 totalen0(:,:,1) = 0.0
 
+! zero everywhere because q is zero everywhere 
 alp0(:,:,1) = 0.0
 bet0(:,:,1) = 0.0
 gam0(:,:,1) = 0.0
@@ -75,10 +76,16 @@ do i = 2, Nx-1
         ght0(i,j,1) = g*(hsurf(i,j) + h(i,j))
         ken0(i,j,1)=(u(i,j)**2 + u(i+1,j)**2 + v(i,j)**2 + v(i,j+1)**2)/4.
     end do
+    do j = 1, Ny-1
+	ken0(i,j,1)=(u(i,j)**2 + u(i+1,j)**2 + v(i,j)**2 + v(i,j+1)**2)/4.
+    end do
+    do j = 1, Ny
+	ght0(i,j,1) = g*(hsurf(i,j) + h(i,j))
+    end do 
 end do 
 
-us0(2:Nx-1,2:Ny-1,1)= hu0(2:Nx-1,2:Ny-1,1)*u(2:Nx-1,2:Ny-1)
-vs0(2:Nx-1,2:Ny-1,1)= hv0(2:Nx-1,2:Ny-1,1)*v(2:Nx-1,2:Ny-1)
+us0(:,:,1)= hu0(:,:,1)*u(:,:)
+vs0(:,:,1)= hv0(:,:,1)*v(:,:)
 
 us0(1,:,1) = us0(Nx-1,:,1)
 us0(Nx,:,1) = us0(2,:,1)  
@@ -117,20 +124,22 @@ totalen0(:,:,1) = ken0(:,:,1) + ght0(:,:,1)
 ! Time-stepping loop
 do n = 2, 3
 	do i = 2, Nx-1
-		do j = 2, Ny-1
-		
+		do j = 1, Ny-1
 			h0(i,j,n) = h0(i,j,n-1) - dT * (us0(i+1,j,n-1) - us0(i,j,n-1) + vs0(i,j+1,n-1) - vs0(i,j,n-1))/Dxm
-			
+		end do 
+
+		do j = 2, Ny-1
+	
 			! Calculate u
    			u0(i,j,n) = u0(i,j,n-1) + dT * (alp0(i,j,n-1) * vs0(i,j+1,n-1) + bet0(i,j,n-1) * vs0(i-1,j+1,n-1) + &
                         gam0(i,j,n-1) * vs0(i-1,j,n-1) + del0(i,j,n-1) * vs0(i,j,n-1) - eps0(i,j,n-1) * &
 			us0(i+1,j,n-1) + eps0(i-1,j,n-1) * us0(i-1,j,n-1) - (ken0(i,j,n-1) - &
-			ght0(i,j,n-1) + ken0(i,j,n-1) + ght0(i,j,n-1)) / Dxm)
+			ght0(i,j,n-1) + ken0(i-1,j,n-1) + ght0(i,j,n-1)) / Dxm)
 			
 			! Calculate v 
                         v0(i,j,n) = v0(i,j,n-1) - dT * (gam0(i+1,j,n-1) * us0(i+1,j,n-1) + del0(i,j,n-1) * us0(i,j,n-1) + &
                         alp0(i,j-1, n-1) * us0(i,j-1,n-1) + bet0(i+1,j-1,n-1) * us0(i+1,j-1,n-1) + phi0(i,j,n-1) * &
-			vs0(i,j+1,n-1) - phi0(i,j-1,n-1) * vs0(i,j-1,n-1) - (ken0(i,j,n-1) + &
+			vs0(i,j+1,n-1) - phi0(i,j-1,n-1) * vs0(i,j-1,n-1) + (ken0(i,j,n-1) + &
 			ght0(i,j,n-1) - ken0(i,j-1,n-1) - ght0(i,j-1,n-1)) / Dxm)
 			
 			! Calculate zeta (z0)
@@ -152,6 +161,9 @@ do n = 2, 3
 	z0(Nx,:,n) = z0(2,:,n) 
 	
 	do i = 2, Nx-1
+		do j = 1, Ny-1
+	        	ken0(i,j,n)=(u0(i,j,n)**2 + u0(i+1,j,n)**2 + v0(i,j,n)**2 + v0(i,j+1,n)**2)/4.
+	    	end do 
 		do j = 2, Ny-1
 		    ! hu0, hv0, and hq0 
 			hu0(i,j,n) = (h0(i-1,j,n) + h0(i+1,j,n)) / 2.0
@@ -161,11 +173,10 @@ do n = 2, 3
 			! Calculate Potential Vorticity
 			q0(i,j,n) = (f + z0(i,j,n)) / hq0(i,j,n)
 
-			! Update everything else
-        		ght0(i,j,n) = g*(hsurf(i,j) + h0(i,j,n))
-        		ken0(i,j,n)=(u0(i,j,n)**2 + u0(i+1,j,n)**2 + v0(i,j,n)**2 + v0(i,j+1,n)**2)/4.
 		end do
 	end do 
+
+	ght0(:,:,n) = g*(hsurf(:,:) + h0(:,:,n))
 	
 	hu0(1,:,n) = hu0(Nx-1,:,n)
 	hu0(Nx,:,n) = hu0(2,:,n)
@@ -196,8 +207,8 @@ do n = 2, 3
 
 	totalen0(:,:,n) = ken0(:,:,n) + ght0(:,:,n)	
 
-	us0(2:Nx-1,2:Ny-1,n)= hu0(2:Nx-1,2:Ny-1,n)*u0(2:Nx-1,2:Ny-1,n)
-	vs0(2:Nx-1,2:Ny-1,n)= hv0(2:Nx-1,2:Ny-1,n)*v0(2:Nx-1,2:Ny-1,n)
+	us0(:,:,n)= hu0(:,:,n)*u0(:,:,n)
+	vs0(:,:,n)= hv0(:,:,n)*v0(:,:,n)
 
 	us0(1,:,n) = us0(Nx-1,:,n)
         us0(Nx,:,n) = us0(2,:,n)
@@ -265,6 +276,9 @@ ght1(:,:) = ght0(:,:,1)
 ght2(:,:) = ght0(:,:,2)
 ght3(:,:)= ght0(:,:,3)
 
+h(:,:) = h0(:,:,3)
+u(:,:) = u0(:,:,3)
+v(:,:) = v0(:,:,3)
 
 ! Adams-Bashforth scheme
 
@@ -272,28 +286,28 @@ do n = 4, ntime
 	do i = 2, Nx-1
                 do j = 2, Ny-1
 
-                        h(i,j) = h(i,j) - f1*(us3(i+1,j+1) -  us3(i,j+1) + vs3(i+1,j+1) -  vs3(i+1,j)) + &
- 					f2*(us2(i+1,j+1) -  us2(i,j+1) + vs2(i+1,j+1) -  vs2(i+1,j)) - &
- 					f3*(us1(i+1,j+1) -  us1(i,j+1) + vs1(i+1,j+1) -  vs1(i+1,j))
+                        h(i,j) = h(i,j) - f1*(us3(i+1,j) -  us3(i,j) + vs3(i,j+1) -  vs3(i,j)) + &
+ 					f2*(us2(i+1,j) -  us2(i,j) + vs2(i,j+1) -  vs2(i,j)) - &
+ 					f3*(us1(i+1,j) -  us1(i,j) + vs1(i,j+1) -  vs1(i,j))
 
 			u(i,j) = u(i,j) + f1 * (alp3(i,j) * vs3(i,j+1) + bet3(i,j) * vs3(i-1,j+1) + gam3(i,j) * vs3(i-1,j) + &
 				del3(i,j) * vs3(i,j) - eps3(i,j) * us3(i+1,j) + eps3(i-1,j) * us3(i-1,j) - (ken3(i,j) - &
-				ght3(i,j) + ken3(i,j) + ght3(i,j)) / Dxm) - &
+				ght3(i,j) + ken3(i-1,j) + ght3(i,j)) / Dxm) - &
 				f2 * (alp2(i,j) * vs2(i,j+1) + bet2(i,j) * vs2(i-1,j+1) + gam2(i,j) * vs2(i-1,j) + &
 				del2(i,j) * vs2(i,j) - eps2(i,j) * us2(i+1,j) + eps2(i-1,j) * us2(i-1,j) - (ken2(i,j) - &
-				ght2(i,j) + ken2(i,j) + ght2(i,j)) / Dxm) + &
+				ght2(i,j) + ken2(i-1,j) + ght2(i,j)) / Dxm) + &
 				f3 * (alp1(i,j) * vs1(i,j+1) + bet1(i,j) * vs1(i-1,j+1) + gam1(i,j) * vs1(i-1,j) + &
 				del1(i,j) * vs1(i,j) - eps1(i,j) * us1(i+1,j) + eps1(i-1,j) * us1(i-1,j) - (ken1(i,j) - &
-				ght1(i,j) + ken1(i,j) + ght1(i,j)) / Dxm)
+				ght1(i,j) + ken1(i-1,j) + ght1(i,j)) / Dxm)
   
-			v(i,j) = f1 * (gam3(i+1,j) * us3(i+1,j) + del3(i,j) * us3(i,j) + alp3(i,j-1) * us3(i,j-1) + &
-				bet3(i+1,j-1) * us3(i+1,j-1) + phi3(i,j) * vs3(i,j+1) - phi3(i,j-1) * vs3(i,j-1) - &
+			v(i,j) = v(i,j) - f1 * (gam3(i+1,j) * us3(i+1,j) + del3(i,j) * us3(i,j) + alp3(i,j-1) * us3(i,j-1) + &
+				bet3(i+1,j-1) * us3(i+1,j-1) + phi3(i,j) * vs3(i,j+1) - phi3(i,j-1) * vs3(i,j-1) + &
 				(ken3(i,j) + ght3(i,j) - ken3(i,j-1) - ght3(i,j-1)) / Dxm) - &
 				f2 * (gam2(i+1,j) * us2(i+1,j) + del2(i,j) * us2(i,j) + alp2(i,j-1) * us2(i,j-1) + &
-				bet2(i+1,j-1) * us2(i+1,j-1) + phi2(i,j) * vs2(i,j+1) - phi2(i,j-1) * vs2(i,j-1) - &
+				bet2(i+1,j-1) * us2(i+1,j-1) + phi2(i,j) * vs2(i,j+1) - phi2(i,j-1) * vs2(i,j-1) + &
 				(ken2(i,j) + ght2(i,j) - ken2(i,j-1) - ght2(i,j-1)) / Dxm) + &
 				f3 * (gam1(i+1,j) * us1(i+1,j) + del1(i,j) * us1(i,j) + alp1(i,j-1) * us1(i,j-1) + &
-				bet1(i+1,j-1) * us1(i+1,j-1) + phi1(i,j) * vs1(i,j+1) - phi1(i,j-1) * vs1(i,j-1) - &
+				bet1(i+1,j-1) * us1(i+1,j-1) + phi1(i,j) * vs1(i,j+1) - phi1(i,j-1) * vs1(i,j-1) + &
 				(ken1(i,j) + ght1(i,j) - ken1(i,j-1) - ght3(i,j-1)) / Dxm)
 		end do
 	end do
