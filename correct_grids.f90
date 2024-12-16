@@ -12,9 +12,10 @@ real :: time                                            !TIME
 
 real, dimension(Nx, Ny) :: h, u, v, q, hsurf, lq, zeta, ght, ken, pen   !array creation with internal variables for each point
 real, dimension(Nx, Ny, 3) :: hu0, hv0, hq0, us0, vs0, h0 ! Variables for time differencing
-real, dimension(Nx, Ny) :: hu1, hu2, hu3, hv1, hv2, hv3, us1, us2, us3, vs1, vs2, vs3, hu, hv, us, vs
+real, dimension(Nx, Ny) :: hu1, hu2, hu3, hv1, hv2, hv3, us1, us2, us3, vs1, vs2, vs3, hu, hv, us, vs, hq
 real, dimension(Nx, Ny, 3) :: alp0, bet0, gam0, del0, eps0, ken0, ght0, q0, z0, phi0, totalen0
 real, dimension(Nx, Ny, 3) :: u0, v0 
+real, dimension(Nx, Ny) :: alp, bet, gam, del, eps, phi
 
 !Variables for further time-stepping
 real, dimension(Nx, Ny) :: alp1, alp2, alp3, bet1, bet2, bet3
@@ -309,6 +310,8 @@ do n = 4, ntime
 				f3 * (gam1(i+1,j) * us1(i+1,j) + del1(i,j) * us1(i,j) + alp1(i,j-1) * us1(i,j-1) + &
 				bet1(i+1,j-1) * us1(i+1,j-1) + phi1(i,j) * vs1(i,j+1) - phi1(i,j-1) * vs1(i,j-1) + &
 				(ken1(i,j) + ght1(i,j) - ken1(i,j-1) - ght3(i,j-1)) / Dxm)
+
+			zeta(i,j) = (u(i,j-1) - u(i,j) + v(i,j) - v(i-1,j)) / Dxm
 		end do
 	end do
 
@@ -326,7 +329,22 @@ do n = 4, ntime
 		do j = 2, Ny-1
 			hu(i,j) = (h(i-1,j) + h(i+1,j))/2.0
         		hv(i,j) = (h(i,j-1) + h(i,j+1))/2.0
+		
+			q(i,j) = (f + zeta(i,j)) / hq(i,j)
+        		alp(i, j) = ((1.0/24.0)*(2*q(i+1,j+1) + q(i,j+1) + 2*q(i,j) + q(i+1,j)))
+                        bet(i, j) = ((1.0/24.0)*(q(i,j+1) + 2*q(i-1,j+1) + q(i-1,j) + 2*q(i,j)))
+                        gam(i, j) = ((1.0/24.0)*(2*q(i,j+1) + q(i-1,j+1) + 2*q(i-1,j) + q(i,j)))
+                        del(i, j) = ((1.0/24.0)*(q(i+1,j+1) + 2*q(i,j+1) + q(i,j) + 2*q(i+1,j)))
+                        eps(i, j) = ((1.0/24.0)*(q(i+1,j+1) + q(i,j+1) - q(i,j) - q(i+1,j)))
+
+                        phi(i, j) = ((1.0/24.0)*(q(i,j+1) + q(i,j) - q(i+1,j) - q(i+1,j+1)))
+                        
+                        hq(i,j)=(h(i,j) + h(i-1,j) + h(i-1,j-1) + h(i,j-1))/4.0
 		end do
+		do j = 1, Ny-1
+	        	ken(i,j)=(u(i,j)**2 + u(i+1,j)**2 + v(i,j)**2 + v(i,j+1)**2)/4.
+	        	ght(i,j) = g*(hsurf(i,j) + h(i,j))
+	    	end do
 	end do 
 
 	hu(1,:) = hu(Nx-1,:)
@@ -339,6 +357,31 @@ do n = 4, ntime
 	vs(1,:) = vs(Nx-1,:)
 	vs(Nx,:) = vs(2,:)
 	
+	alp(1,:) = alp(Nx-1,:)
+	alp(Nx,:) = alp(2,:)
+	bet(1,:) = bet(Nx-1,:)
+	bet(Nx,:) = bet(2,:)
+	gam(1,:) = gam(Nx-1,:)
+	gam(Nx,:) = gam(2,:)
+	del(1,:) = del(Nx-1,:)
+	del(Nx,:) = del(2,:)
+	eps(1,:) = eps(Nx-1,:)
+	eps(Nx,:) = eps(2,:)
+	phi(1,:) = phi(Nx-1,:)
+	phi(Nx,:) = phi(2,:)
+
+	q(1,:) = q(Nx-1,:)
+	q(Nx,:) = q(2,:)
+	
+	zeta(1,:) = zeta(Nx-1,:)
+	zeta(Nx,:) = zeta(2,:)
+	
+	ken(1,:) = ken(Nx-1,:)
+	ken(Nx,:) = ken(2,:)
+	
+	ght(1,:) = ght(Nx-1,:)
+	ght(Nx,:) = ght(2,:)
+
 	us1 = us2
 	us2 = us3
 	us3 = us
@@ -348,6 +391,32 @@ do n = 4, ntime
 	hv1 = hv2
 	hv2 = hv3
 	hv3 = hv
+
+	alp1 = alp2
+	alp2 = alp3
+	alp3 = alp 
+	bet1 = bet2
+	bet2 = bet3 
+	bet3 = bet 
+	gam1 = gam2 
+	gam2 = gam3 
+	gam3 = gam 
+	del1 = del2 
+	del2 = del3 
+	del3 = del 
+	eps1 = eps2 
+	eps2 = eps3 
+	eps3 = eps 
+	phi1 = phi2 
+	phi2 = phi3 
+	phi3 = phi 
+	
+	ken1 = ken2 
+	ken2 = ken3 
+	ken3 = ken 
+	ght1 = ght2 
+	ght2 = ght3 
+	ght3 = ght 
 
 end do 
 
