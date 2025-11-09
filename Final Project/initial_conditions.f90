@@ -48,11 +48,14 @@ program initial_conditions
       !allocate v variable!
 
       !allocate h variable!
-
+      allocate(h(Nx,Ny))
+      h(1:Nx, 1:Ny) = 5e+03 !in m, initial height "hzero" defined in Arakawa and Lamb 1981
       !allocate hu0 vairable!
-
+      allocate(hu0(Nx,Ny,3))
+      hu0(1:Nx, 1:Ny, 1) = 0.5*(h(Nx+1, 1:Ny, 1) + h(Nx-1, 1:Ny, 1)) !arithmetic average described in paper for h^u
       !allocate hv0 variable!
-
+      allocate(hv0(Nx,Ny,3))
+      hv0(1:Nx, 1:Ny, 1) = 0.5*(h(1:Nx, Ny+1, 1) + h(1:Nx, Ny-1, 1)) !arithmetic average described in paper for h^v
       !allocate us0 variable!
       allocate(us0(Nx, Ny, 3))
       us0(1:Nx, 1:Ny, 1) = hu0(1:Nx, 1:Ny, 1)*u(1:Nx, 1:Ny) 
