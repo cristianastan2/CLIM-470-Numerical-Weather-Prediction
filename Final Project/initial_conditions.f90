@@ -50,7 +50,7 @@ program initial_conditions
       !allocate h variable!
       allocate(h(Nx,Ny))
       do i = 1,Nx
-      h(i:) = 5e+03 !in m, initial height "hzero" defined in Arakawa and Lamb 1981
+      h(i:) = 5e+03 - hs(i)!in m, initial height "hzero" defined in Arakawa and Lamb 1981
       end do
       !allocate hu0 vairable!
       allocate(hu0(Nx,Ny,3))
