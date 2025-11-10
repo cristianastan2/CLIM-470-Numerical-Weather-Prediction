@@ -49,13 +49,23 @@ program initial_conditions
 
       !allocate h variable!
       allocate(h(Nx,Ny))
-      h(1:Nx, 1:Ny) = 5e+03 !in m, initial height "hzero" defined in Arakawa and Lamb 1981
+      do i = 1,Nx
+      h(i:) = 5e+03 !in m, initial height "hzero" defined in Arakawa and Lamb 1981
+      end do
       !allocate hu0 vairable!
       allocate(hu0(Nx,Ny,3))
-      hu0(1:Nx, 1:Ny, 1) = 0.5*(h(Nx+1, 1:Ny, 1) + h(Nx-1, 1:Ny, 1)) !arithmetic average described in paper for h^u
+      hu0(1,:,1) = (h(Nx,:) + h(2,:))/2.0 !arithmetic average described in paper for h^u
+      hu0(Nx,:,1) = (h(Nx-1,:) + h(1,:))/2.0
+      do i = 2, Nx-1
+      hu0(i,:,1) = (h(i-1,:) + h(i+1,:))/2.0
+      end do 
       !allocate hv0 variable!
       allocate(hv0(Nx,Ny,3))
-      hv0(1:Nx, 1:Ny, 1) = 0.5*(h(1:Nx, Ny+1, 1) + h(1:Nx, Ny-1, 1)) !arithmetic average described in paper for h^v
+      hv0(:,1,1) = (h(:,Ny) + h(:,2))/2.0 !arithmetic average described in paper for h^v
+      hv0(:,Ny,1) = (h(:,Ny-1) + h(:,1))/2.0
+      do j = 2, Ny-1
+      hv0(:,j,1) = (h(:,j-1) + h(:,j+1))/2.0
+      end do
       !allocate us0 variable!
       allocate(us0(Nx, Ny, 3))
       us0(1:Nx, 1:Ny, 1) = hu0(1:Nx, 1:Ny, 1)*u(1:Nx, 1:Ny) 
