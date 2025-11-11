@@ -2,10 +2,13 @@ program initial_conditions
       implicit none
       
       !parameters! 
-      integer, parameter::Lx = 6e+06 !domain size in x-direction
-      integer, parameter::Ly = 2e+06 !domain size in y-direction
-      real, parameter::hs_top = 2e+03 !height of the mountain
+      integer, parameter::Lx = 6e+06 !domain size in x-direction (m)
+      integer, parameter::Ly = 2e+06 !domain size in y-direction (m)
+      real, parameter::hs_top = 2e+03 !height of the mountain (m)
+      real, parameter::g = 9.8 !the acceleration of gravity (m/s^2)
+      real, parameter::f = 1e-04 !the Coriolis parameter (s^-1)
       integer, parameter::t = 1 !time step (s)
+      
       
       !resolution!
       real:: d !model resolution, ie delta_x, delta_y
@@ -14,8 +17,10 @@ program initial_conditions
       integer:: Nx !number of grid points in x-direction (13, 25, 49)
       integer:: Ny !number of grid points in y-direction (5, 9, 17)
       integer:: i, j, ii, jj, ierr !working variables
+      real, allocatable::vor(:,:) !vorticity
+      real, allocatable::q(:,:) !potential vorticity
       real, allocatable::hs(:,:), u(:,:), v(:,:), h(:,:)
-      real, allocatable::hu0(:,:,3), hv0(:,:,3), us0(:,:,3),vs0(:,:,3) !store the results from forward scheme for each time steps
+      real, allocatable::hu0(:,:,3), hv0(:,:,3), us0(:,:,3), vs0(:,:,3) !store the results from forward scheme for each time steps
 
       !d = 5e+05
       !d = 2.5e+05
@@ -43,7 +48,7 @@ program initial_conditions
 
       !allocate u variable!
       allocate(u(Nx,Ny))
-      u(1:Nx, 1:Ny) = 20 !m/s, initial condition on reference paper
+      u(1:Nx, 1:Ny) = 20.0 !m/s, initial condition on reference paper
 
       !allocate v variable!
 
@@ -52,13 +57,15 @@ program initial_conditions
       do i = 1,Nx
       h(i:) = 5e+03 - hs(i)!in m, initial height "hzero" defined in Arakawa and Lamb 1981
       end do
+      
       !allocate hu0 vairable!
       allocate(hu0(Nx,Ny,3))
       hu0(1,:,1) = (h(Nx,:) + h(2,:))/2.0 !arithmetic average described in paper for h^u
       hu0(Nx,:,1) = (h(Nx-1,:) + h(1,:))/2.0
       do i = 2, Nx-1
       hu0(i,:,1) = (h(i-1,:) + h(i+1,:))/2.0
-      end do 
+      end do
+      
       !allocate hv0 variable!
       allocate(hv0(Nx,Ny,3))
       hv0(:,1,1) = (h(:,Ny) + h(:,2))/2.0 !arithmetic average described in paper for h^v
@@ -66,6 +73,7 @@ program initial_conditions
       do j = 2, Ny-1
       hv0(:,j,1) = (h(:,j-1) + h(:,j+1))/2.0
       end do
+      
       !allocate us0 variable!
       allocate(us0(Nx, Ny, 3))
       us0(1:Nx, 1:Ny, 1) = hu0(1:Nx, 1:Ny, 1)*u(1:Nx, 1:Ny) 
@@ -84,6 +92,10 @@ program initial_conditions
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(13, rec=1)h
       close(13)
+
+      !allocate vor variable!
+      allocate(vor(Nx,Ny))
+      
 
 end program initial_conditions
 
