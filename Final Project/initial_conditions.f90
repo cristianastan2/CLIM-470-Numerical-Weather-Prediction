@@ -20,7 +20,7 @@ program initial_conditions
       real, allocatable::vor(:,:) !vorticity
       real, allocatable::q(:,:) !potential vorticity
       real, allocatable::hs(:,:), u(:,:), v(:,:), h(:,:)
-      real, allocatable::hu0(:,:,3), hv0(:,:,3), us0(:,:,3), vs0(:,:,3) !store the results from forward scheme for each time steps
+      real, allocatable::hu0(:,:,:), hv0(:,:,:), us0(:,:,:), vs0(:,:,:) !store the results from forward scheme for each time steps
 
       !d = 5e+05
       !d = 2.5e+05
@@ -51,11 +51,15 @@ program initial_conditions
       u(1:Nx, 1:Ny) = 20.0 !m/s, initial condition on reference paper
 
       !allocate v variable!
+      allocate(v(Nx, Ny))
+      v(1:Nx, 1) = 0 !rigid computational boundary
+      v(1:Nx, Ny) = 0 !rigid computational boundary
+      v(1:Nx, 2:Ny-1) = 0 !cannot find initial condition of v from the paper
 
       !allocate h variable!
       allocate(h(Nx,Ny))
       do i = 1,Nx
-      h(i:) = 5e+03 - hs(i)!in m, initial height "hzero" defined in Arakawa and Lamb 1981
+      h(i,:) = 5e+03 - hs(i, :)!in m, initial height "hzero" defined in Arakawa and Lamb 1981
       end do
       
       !allocate hu0 vairable!
@@ -76,7 +80,11 @@ program initial_conditions
       
       !allocate us0 variable!
       allocate(us0(Nx, Ny, 3))
-      us0(1:Nx, 1:Ny, 1) = hu0(1:Nx, 1:Ny, 1)*u(1:Nx, 1:Ny) 
+      us0(1:Nx, 1:Ny, 1) = hu0(1:Nx, 1:Ny, 1)*u(1:Nx, 1:Ny)
+
+      !allocate vs0 variable!
+      allocate(vs0(Nx, Ny, 3))
+      vs0(1:Nx, 1:Ny, 1) = vs0(1:Nx, 1:Ny, 1)*v(1:Nx, 1:Ny)
 
       open(11, file='u_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
