@@ -19,9 +19,16 @@ program initial_conditions
       integer:: i, j, ii, jj, ierr !working variables
       real, allocatable::vor(:,:) !vorticity
       real, allocatable::q(:,:) !potential vorticity
+      real, allocatable::pe(:,:) !potential energy
+      real, allocatable::ke(:,:) !kinetic energy
       real, allocatable::hs(:,:), u(:,:), v(:,:), h(:,:)
-      real, allocatable::hu0(:,:,:), hv0(:,:,:), us0(:,:,:), vs0(:,:,:) !store the results from forward scheme for each time steps
 
+      !store the results from forward scheme(Euler Scheme) for each time steps(n=2, n=3)
+      real, allocatable::hu0(:,:,:), hv0(:,:,:), us0(:,:,:), vs0(:,:,:), hq0(:,:,:)
+      real, allocatable::vor0(:,:,:), q0(:,:,:), pe(:,:,:), ke(:,:,:)
+      real, allocatable::alp0(:,:,:), bet0(:,:,:), gam0(:,:,:), del0(:,:,:), eps(:,:,:) !constant
+
+      !resolution!
       !d = 5e+05
       !d = 2.5e+05
       d = 1.25e+05
@@ -54,7 +61,7 @@ program initial_conditions
       allocate(v(Nx, Ny))
       v(1:Nx, 1) = 0 !rigid computational boundary
       v(1:Nx, Ny) = 0 !rigid computational boundary
-      v(1:Nx, 2:Ny-1) = 0 !cannot find initial condition of v from the paper
+      v(1:Nx, 2:Ny-1) = 10
 
       !allocate h variable!
       allocate(h(Nx,Ny))
@@ -101,8 +108,68 @@ program initial_conditions
       write(13, rec=1)h
       close(13)
 
-      !allocate vor variable!
-      allocate(vor(Nx,Ny))
+      !allocate vor0 variable!
+      allocate(vor0(Nx,Ny,3))
+      do i = 1, Nx
+      vor0(i,1,1) = 0
+      vor0(i,Ny,,1) = 0
+      end do
+
+      do j = 2, Ny-1
+      vor0(1,j,1) = (u(1,j-1) - u(1,j+1) + v(2,j) - v(Nx, j))/d
+      vor0(Nx,j,1) = (u(Nx,j-1) - u(1,j+1) + v(1,j) - v(Nx-1,j))/d
+      end do
+
+      do i = 2, Nx-1
+       do j = 2, Ny-1
+        vor0(i,j,1) = (u(i,j-1) - u(i,j+1) + v(i+1,j) - v(i-1,j))/d
+       end do
+      end do
+
+      !allocate hq0 variable!
+      allocate(hq0(Nx,Ny,3))
+      hq0(1,1,1) = (h(1,1) + h(Nx,1))/2.0
+      hq0(1,Ny,1) = (h(1,Ny-1) + h(Nx,Ny-1))/2.0
+
+      do i = 2, Nx
+       hq0(i,1,1) = (h(i,1) + h(i-1, 1))/2.0
+       hq0(i,Ny,1) = (h(i,Ny-1) + h(i-1,Ny-1))/2.0
+      end do
+
+      do j = 2, Ny-1
+       hq0(1,j,1) = (h(1,j) + h(i-1,j) + h(Nx, j) + h(Nx-1,j-1))/4.0
+      end do
+
+      do j = 2, Ny-1
+       do i = 2, Nx
+        hq0(i,j,1) = (h(i,j) + h(i-1,j) + h(i-1,j-1) + h(i,j-1))/4.0
+       end do
+      end do
+
+      !allocate q0 variable!
+      allocate(q0(Nx,Ny,3))
+      do j = 1, Ny
+       do i = 1, Nx
+        q0(i,j,1) = (z0(i,j,1) + f)/hq0(i,j,1)
+       end do
+      end do
+
+      !allocate pe0 variable!
+      allocate(pe0(Nx,Ny,3))
+      do i = 1, Nx
+       do j = 1, Ny
+        pe0(i,j,1) = g * (hs(i,j) + h(i,j))
+       end do
+      end do
+
+      !allocate ke0 variable!
+      allocate(ke0(Nx,Ny,3))
+      do i = 1, Nx
+       ke0(i,Ny,1) = 0
+      end do
+
+      do j = 1, Ny-1
+       ke0(Nx,j,1) = (u(Nx-1,j)**2 + u(1,j)**2 + v(Nx-1,j)**2 + v(1,Ny+1)**2)/4
       
 
 end program initial_conditions
