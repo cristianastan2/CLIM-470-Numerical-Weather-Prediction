@@ -1,4 +1,4 @@
-program initial_conditions
+program shallow_water_model
       implicit none
       
       !parameters! 
@@ -9,14 +9,13 @@ program initial_conditions
       real, parameter::f = 1e-04 !the Coriolis parameter (s^-1)
       integer, parameter::t = 1 !time step (s)
       
-      
       !resolution!
       real:: d !model resolution, ie delta_x, delta_y
 
       !variables!
       integer:: Nx !number of grid points in x-direction (13, 25, 49)
       integer:: Ny !number of grid points in y-direction (5, 9, 17)
-      integer:: i, j, ii, jj, ierr !working variables
+      integer:: i, j, ii, jj, ierr, n !working variables
       real, allocatable::vor(:,:) !vorticity
       real, allocatable::q(:,:) !potential vorticity
       real, allocatable::pe(:,:) !potential energy
@@ -25,8 +24,8 @@ program initial_conditions
 
       !store the results from forward scheme(Euler Scheme) for each time steps(n=2, n=3)
       real, allocatable::hu0(:,:,:), hv0(:,:,:), us0(:,:,:), vs0(:,:,:), hq0(:,:,:)
-      real, allocatable::vor0(:,:,:), q0(:,:,:), pe(:,:,:), ke(:,:,:)
-      real, allocatable::alp0(:,:,:), bet0(:,:,:), gam0(:,:,:), del0(:,:,:), eps(:,:,:) !constant
+      real, allocatable::vor0(:,:,:), q0(:,:,:), pe0(:,:,:), ke0(:,:,:)
+      real, allocatable::alp0(:,:,:), bet0(:,:,:), gam0(:,:,:), del0(:,:,:), eps0(:,:,:), pi0(:,:,:) !constant
 
       !resolution!
       !d = 5e+05
@@ -112,7 +111,7 @@ program initial_conditions
       allocate(vor0(Nx,Ny,3))
       do i = 1, Nx
       vor0(i,1,1) = 0
-      vor0(i,Ny,,1) = 0
+      vor0(i,Ny,1) = 0
       end do
 
       do j = 2, Ny-1
@@ -170,7 +169,89 @@ program initial_conditions
 
       do j = 1, Ny-1
        ke0(Nx,j,1) = (u(Nx-1,j)**2 + u(1,j)**2 + v(Nx-1,j)**2 + v(1,Ny+1)**2)/4
+      end do
+
+      do i = 1, Nx-1
+       do j = 1, Ny-1
+        ke0(i, j, 1) = (u(i, j)**2 + u(i+1, j)**2 + v(i, j)**2 + v(1, j+1)**2)/4
+       end do
+      end do
+
+      !allocate alp0, bet0, gam0, del0, eps0, pi0 variables!
+      allocate(alp0(Nx, Ny, 3), bet0(Nx, Ny, 3), gam0(Nx, Ny, 3), del0(Nx, Ny, 3), eps0(Nx, Ny, 3), pi0(Nx, Ny, 3))
+      do i = 1, Nx-1
+       do j = 1, Ny-1
+        alp0(i, j, 1) = (1/24) * (2*q0(i+1, j+1, 1) + q0(i, j+1, 1) + 2*q0(i, j) + q0(i+1, j, 1))
+        del0(i, j, 1) = (1/24) * (q0(i+1, j+1, 1) + 2*q0(i, j+1, 1) + q0(i, j) + 2*q0(i+1, j, 1))
+        eps0(i, j, 1) = (1/24) * (q0(i+1, j+1, 1) + q0(i, j+1, 1) - q0(i, j) - q0(i+1, j, 1))
+        pi0(i, j, 1) = (1/24) * (-q0(i+1, j+1, 1) + q0(i, j+1, 1) + q0(i, j) - q0(i+1, j, 1))
+       end do
+      end do
+
+      do i = 1, Nx
+       alp0(i, Ny, 1) = 0
+       del0(i, Ny, 1) = 0
+       eps0(i, Ny, 1) = 0
+       pi0(i, Ny, 1) = 0
+       del0(i, Ny, 1) = 0
+       gam0(i, Ny, 1) = 0
+      end do
+
+      do j = 1, Ny-1
+       alp0(Nx, j, 1) = (1/24) * (2*q0(2, j+1, 1) + q0(1, j+1, 1) + 2*q0(1, j) + q0(2, j, 1))
+       del0(Nx, j, 1) = (1/24) * (q0(2, j+1, 1) + 2*q0(1, j+1, 1) + q0(1, j) + 2*q0(2, j, 1))
+       eps0(Nx, j, 1) = 0
+       pi0(Nx, j, 1) = 0
+       bet0(1, j, 1) = (1/24) * (q0(1, j+1) + 2*q0(Nx, j+1) + q0(Nx, j) + 2*q0(1, j))
+       gam0(1, j, 1) = (1/24) * (2*q0(1, j+1) + q0(Nx, j+1) + 2*q0(Nx, j) + q0(1, j))
+      end do
+
+      do i = 2, Nx
+       do j = 1, Ny-1
+        bet0(i, j, 1) = (1/24) * (q0(i, j+1) + 2*q0(i-1, j+1) + q0(i-1, j) + 2*q0(i, j))
+        gam0(i, j, 1) = (1/24) * (2*q0(i, j+1) + q0(i-1, j+1) + 2*q0(i-1, j) + q0(i, j))
+       end do
+      end do
+
+      !Forward (Euler) scheme!
+      do n = 2, 3
+
+      !h, u, v update!
+      do i = 2, Nx-1
+       do j = 2, Ny-1
+        do ii = 1, Nx-1
+         do jj = 1, Ny-1
+          h(ii, jj) = h(ii, jj) - (t*(us0(i+1, jj, n-1) - us0(i, jj, n-1) + vs0(ii, j+1, n-1) - vs0(ii, j, n-1)))/d
+          u(i, jj) = u(i, jj) + t*(alp0(i, jj+1, n-1)*vs0(ii, j, n-1) + bet0(i, jj+1, n-1)*vs0(ii-1, j+1, n-1) + gam0(i, jj+1, n-1)*vs0(ii-1, j, n-1) + del0(i, jj+1, n-1)*vs0(ii+1, j, n-1) - eps0(ii+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + eps0(ii-1, jj+1, n-1)*us0(i-1, jj+1, n-1)) - (t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii-1, jj+1, n-1) - pe0(ii-1, jj+1, n-1)))/d
+          v(ii, j) = v(ii, j) - t*(gam0(i+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + del0(i, jj+1, n-1)*us0(i, jj+1, n-1) + alp0(i, jj-1, n-1)*us0(i, jj-1, n-1) + bet0(i+1, jj-1, n-1)*us0(i+1, jj-1, n-1) + pi0(ii+1, jj+1, n-1)*vs0(ii+1, j+1, n-1) - pi0(ii+1, jj-1, n-1)*vs0(ii+1, jj-1, n-1) -(t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii+1, jj-1, n-1) - pe0(ii+1, jj-1, n-1)))/d
+         end do
+        end do
+       end do 
+      end do
+
+      !hu0, hv0, us0, vs0 update!
+      hu0(1, :, n) = (h(Nx-1, :) + h(1, :))/2.0
+
+      do ii = 2, Nx-1
+       hu0(ii, :, n) = (h(ii-1, :) + h(ii, :))/2.0
+      end do
+
+      hv0(:, 1, n) = (h(:, Ny-1) + h(:, 1))/2.0
+
+      do jj = 2, Ny-1
+       hv0(:, jj, n) = (h(:, jj-1) + h(:, jj))/2.0
+      end do
+
+      us0(:, :, n) = hu0(:, :, n) * u(:, :)
+      vs0(:, :, n) = hv0(:, :, n) * v(:, :)
+
+      !vorticity update!
+      
       
 
-end program initial_conditions
+
+
+      end do
+
+end program shallow_water_model
 
