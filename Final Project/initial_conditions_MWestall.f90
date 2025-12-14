@@ -21,7 +21,7 @@ program initial_conditions
       real, allocatable::q(:,:) !potential vorticity
       real, allocatable::pe(:,:) !potential energy
       real, allocatable::ke(:,:) !kinetic energy
-      real, allocatable::hs(:,:), u(:,:), v(:,:), h(:,:)
+      real, allocatable::hs(:,:), u(:,:), v(:,:), h(:,:), hu(:,:), hv(:,:), hq(:,:)
 
       !store the results from forward scheme(Euler Scheme) for each time steps(n=2, n=3)
       real, allocatable::hu0(:,:,:), hv0(:,:,:), us0(:,:,:), vs0(:,:,:), hq0(:,:,:)
@@ -63,10 +63,12 @@ program initial_conditions
       v(1:Nx, Ny) = 0 !rigid computational boundary
       v(1:Nx, 2:Ny-1) = 10
 
+!--------editing initial h sections per mod26.1 discussion -----------
+!initial conditions t = 0
       !allocate h variable!
       allocate(h(Nx,Ny))
       do i = 1,Nx
-      h(i,:) = 5e+03 - hs(i, :)!in m, initial height "hzero" defined in Arakawa and Lamb 1981
+      h(i,:) = 5e+03 - hs(i) !in m, initial height "hzero" defined in Arakawa and Lamb 1981
       end do
       
       !allocate hu0 vairable!
@@ -83,6 +85,48 @@ program initial_conditions
       hv0(:,Ny,1) = (h(:,Ny-1) + h(:,1))/2.0
       do j = 2, Ny-1
       hv0(:,j,1) = (h(:,j-1) + h(:,j+1))/2.0
+      end do
+
+            !allocate hq0 variable!
+      allocate(hq0(Nx,Ny,3))
+      hq0(1,1,1) = (h(1,1) + h(Nx,1))/2.0
+      hq0(1,Ny,1) = (h(1,Ny-1) + h(Nx,Ny-1))/2.0
+
+      do i = 2, Nx
+       hq0(i,1,1) = (h(i,1) + h(i-1, 1))/2.0
+       hq0(i,Ny,1) = (h(i,Ny-1) + h(i-1,Ny-1))/2.0
+      end do
+
+      do j = 2, Ny-1
+       hq0(1,j,1) = (h(1,j) + h(i-1,j) + h(Nx, j) + h(Nx-1,j-1))/4.0
+      end do
+
+      do j = 2, Ny-1
+       do i = 2, Nx
+        hq0(i,j,1) = (h(i,j) + h(i-1,j) + h(i-1,j-1) + h(i,j-1))/4.0
+       end do
+      end do
+
+      !hu hv and hq
+      do i = 1, Nx
+       do j = 1, Ny
+        do ii = 1, Nx-1
+         do jj = 1, Ny-1
+               hu(i,jj) = (h(ii-1,jj) + h(ii,jj))/2
+               hv(ii,j) = (h(ii,jj-1) + h(ii,jj))/2
+         end do
+        end do
+       end do
+      end do
+
+      do i = 1, Nx
+       do j = 1, Ny
+        do ii = 2, Nx-1
+         do jj = 2, Ny-1
+            hq(i,j) = (h(ii,jj) + h(ii-1,jj) + h(ii-1,jj-1) + h(ii,jj-1))/4
+         end do
+        end do
+       end do
       end do
       
       !allocate us0 variable!
@@ -126,26 +170,6 @@ program initial_conditions
        end do
       end do
 
-      !allocate hq0 variable!
-      allocate(hq0(Nx,Ny,3))
-      hq0(1,1,1) = (h(1,1) + h(Nx,1))/2.0
-      hq0(1,Ny,1) = (h(1,Ny-1) + h(Nx,Ny-1))/2.0
-
-      do i = 2, Nx
-       hq0(i,1,1) = (h(i,1) + h(i-1, 1))/2.0
-       hq0(i,Ny,1) = (h(i,Ny-1) + h(i-1,Ny-1))/2.0
-      end do
-
-      do j = 2, Ny-1
-       hq0(1,j,1) = (h(1,j) + h(i-1,j) + h(Nx, j) + h(Nx-1,j-1))/4.0
-      end do
-
-      do j = 2, Ny-1
-       do i = 2, Nx
-        hq0(i,j,1) = (h(i,j) + h(i-1,j) + h(i-1,j-1) + h(i,j-1))/4.0
-       end do
-      end do
-
       !allocate q0 variable!
       allocate(q0(Nx,Ny,3))
       do j = 1, Ny
@@ -170,7 +194,40 @@ program initial_conditions
 
       do j = 1, Ny-1
        ke0(Nx,j,1) = (u(Nx-1,j)**2 + u(1,j)**2 + v(Nx-1,j)**2 + v(1,Ny+1)**2)/4
+<<<<<<< HEAD:Final Project/initial_conditions_Seokchan_Kim.f90
       end do
+=======
+
+!first 2 time steps euler ... work in progress
+do n = 2,3
+
+do i = 2, Nx-1
+ do j = 2, Ny-1
+  do ii = 1, Nx-1
+   do jj = 1, Ny-1
+    h(ii,jj) = h(ii,jj) - (t*(us0(i+1,jj,n-1) - us0(i,jj,n-1) + vs0(ii,j+1,n-1) - vs0(ii,j,n-1)))/d
+   end do
+  end do
+ end do
+end do
+
+hu0(1,:,n) = (h(Nx-1,:) + h(1,:))/2
+
+do ii = 2, Nx-1
+ hu0(i,:,n) = (h(:,Ny-1) + h(:,1))/2
+end do
+
+hv0(:,1,n) = (h(:,Ny-1) + h(:,1))/2
+
+do jj = 2, Ny-1
+ hv0(:,j,n) = (h(:,jj-1) + h(:,jj))/2
+end do
+
+us0(:,:,n) = hu0(:,:,n)*u(:,:)
+vs0(:,:,n) = hv0(:,:,n)*v(:,:)
+
+end do
+>>>>>>> 9416f1d900f024277102e6a18cd4c15dc2ac36c2:Final Project/initial_conditions_MWestall.f90
 
 end program initial_conditions
 
