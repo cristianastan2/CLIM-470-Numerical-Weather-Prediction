@@ -49,5 +49,9 @@ program topography
 
       open(10,file='topography_high_res.dat',status='unknown', form='unformatted',action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
-      write(10, rec=1)hlow      close(10)
-/bin/bash: wq: command not found
+      write(10, rec=1)hs
+
+      close(10)
+      end program topography
+
+      
