@@ -37,7 +37,7 @@ program shallow_water_model
 
       !allocate hs variable!
       allocate(hs(Nx, Ny))
-      hs(1:Nx, 1:Ny) = 0
+      hs(1:Nx, 1:Ny) = 0.0
       hs((Nx+1)/2, 1:Ny) = hs_top
 
       if (d==2.5e+05) then
@@ -52,20 +52,21 @@ program shallow_water_model
               hs((Nx+1)/2+3, 1:Ny) = 0.5e+03
       endif
 
+      !!!============initial conditions============!!!
       !allocate u variable!
       allocate(u(Nx,Ny))
       u(1:Nx, 1:Ny) = 20.0 !m/s, initial condition on reference paper
 
       !allocate v variable!
       allocate(v(Nx, Ny))
-      v(1:Nx, 1) = 0 !rigid computational boundary
-      v(1:Nx, Ny) = 0 !rigid computational boundary
-      v(1:Nx, 2:Ny-1) = 10
+      v(1:Nx, 1) = 0.0 !rigid computational boundary
+      v(1:Nx, Ny) = 0.0 !rigid computational boundary
+      v(1:Nx, 2:Ny-1) = 10.0
 
       !allocate h variable!
       allocate(h(Nx,Ny))
       do i = 1,Nx
-      h(i,:) = 5e+03 - hs(i, :)!in m, initial height "hzero" defined in Arakawa and Lamb 1981
+      h(i,:) = 5e+03 - hs(i, :)!in m, initial height "hzero" defined in Arakawa and Lamb 1981, vertical extent fluid column above the bottom surface
       end do
       
       !allocate hu0 vairable!
@@ -90,8 +91,9 @@ program shallow_water_model
 
       !allocate vs0 variable!
       allocate(vs0(Nx, Ny, 3))
-      vs0(1:Nx, 1:Ny, 1) = vs0(1:Nx, 1:Ny, 1)*v(1:Nx, 1:Ny)
+      vs0(1:Nx, 1:Ny, 1) = hv0(1:Nx, 1:Ny, 1)*v(1:Nx, 1:Ny)
 
+      !create the initial data (u, v, h) files for each resolutions!
       open(11, file='u_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(11, rec=1)u
@@ -110,8 +112,8 @@ program shallow_water_model
       !allocate vor0 variable!
       allocate(vor0(Nx,Ny,3))
       do i = 1, Nx
-      vor0(i,1,1) = 0
-      vor0(i,Ny,1) = 0
+      vor0(i,1,1) = 0.0
+      vor0(i,Ny,1) = 0.0
       end do
 
       do j = 2, Ny-1
@@ -136,7 +138,7 @@ program shallow_water_model
       end do
 
       do j = 2, Ny-1
-       hq0(1,j,1) = (h(1,j) + h(i-1,j) + h(Nx, j) + h(Nx-1,j-1))/4.0
+       hq0(1,j,1) = (h(1,j) + h(Nx,j) + h(Nx, j-1) + h(1,j-1))/4.0
       end do
 
       do j = 2, Ny-1
@@ -149,7 +151,7 @@ program shallow_water_model
       allocate(q0(Nx,Ny,3))
       do j = 1, Ny
        do i = 1, Nx
-        q0(i,j,1) = (z0(i,j,1) + f)/hq0(i,j,1)
+        q0(i,j,1) = (vor0(i,j,1) + f)/hq0(i,j,1)
        end do
       end do
 
@@ -164,37 +166,36 @@ program shallow_water_model
       !allocate ke0 variable!
       allocate(ke0(Nx,Ny,3))
       do i = 1, Nx
-       ke0(i,Ny,1) = 0
+       ke0(i,Ny,1) = 0.0
       end do
 
       do j = 1, Ny-1
-       ke0(Nx,j,1) = (u(Nx-1,j)**2 + u(1,j)**2 + v(Nx-1,j)**2 + v(1,Ny+1)**2)/4
+       ke0(Nx,j,1) = (u(Nx-1,j)**2 + u(1,j)**2 + v(Nx-1,j)**2 + v(1,j+1)**2)/4.0
       end do
 
       do i = 1, Nx-1
        do j = 1, Ny-1
-        ke0(i, j, 1) = (u(i, j)**2 + u(i+1, j)**2 + v(i, j)**2 + v(1, j+1)**2)/4
+        ke0(i, j, 1) = (u(i, j)**2 + u(i+1, j)**2 + v(i, j)**2 + v(i, j+1)**2)/4.0
        end do
       end do
 
       !allocate alp0, bet0, gam0, del0, eps0, pi0 variables!
       allocate(alp0(Nx, Ny, 3), bet0(Nx, Ny, 3), gam0(Nx, Ny, 3), del0(Nx, Ny, 3), eps0(Nx, Ny, 3), pi0(Nx, Ny, 3))
-      do i = 1, Nx-1
-       do j = 1, Ny-1
-        alp0(i, j, 1) = (1/24) * (2*q0(i+1, j+1, 1) + q0(i, j+1, 1) + 2*q0(i, j) + q0(i+1, j, 1))
-        del0(i, j, 1) = (1/24) * (q0(i+1, j+1, 1) + 2*q0(i, j+1, 1) + q0(i, j) + 2*q0(i+1, j, 1))
-        eps0(i, j, 1) = (1/24) * (q0(i+1, j+1, 1) + q0(i, j+1, 1) - q0(i, j) - q0(i+1, j, 1))
-        pi0(i, j, 1) = (1/24) * (-q0(i+1, j+1, 1) + q0(i, j+1, 1) + q0(i, j) - q0(i+1, j, 1))
+      alp0(:, :, 1) = 0.0
+      bet0(:, :, 1) = 0.0
+      gam0(:, :, 1) = 0.0
+      del0(:, :, 1) = 0.0
+      eps0(:, :, 1) = 0.0
+      pi0(:, :, 1) = 0.0
+      
+      do i = 2, Nx-1
+       do j = 2, Ny-1
+        alp0(i, j, 1) = (2.0*q0(i+1, j+1, 1) + q0(i, j+1, 1) + 2.0*q0(i, j) + q0(i+1, j, 1))/24.0
+        del0(i, j, 1) = (q0(i+1, j+1, 1) + 2.0*q0(i, j+1, 1) + q0(i, j) + 2.0*q0(i+1, j, 1))/24.0
+        eps0(i, j, 1) = (q0(i+1, j+1, 1) + q0(i, j+1, 1) - q0(i, j) - q0(i+1, j, 1))/24.0
+        pi0(i, j, 1) = (-q0(i+1, j+1, 1) + q0(i, j+1, 1) + q0(i, j) - q0(i+1, j, 1))/24.0
+       !(should be modified)
        end do
-      end do
-
-      do i = 1, Nx
-       alp0(i, Ny, 1) = 0
-       del0(i, Ny, 1) = 0
-       eps0(i, Ny, 1) = 0
-       pi0(i, Ny, 1) = 0
-       del0(i, Ny, 1) = 0
-       gam0(i, Ny, 1) = 0
       end do
 
       do j = 1, Ny-1
@@ -213,14 +214,30 @@ program shallow_water_model
        end do
       end do
 
-      !Forward (Euler) scheme!
+      !create the initial data (vor, pe0, ke0) files for each resolutions!
+      open(14, file='vor_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+      write(14, rec=1)vor
+      close(14)
+      
+      open(15, file='pe0_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+      write(15, rec=1)pe0
+      close(15)
+
+      open(16, file='ke0_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+      write(16, rec=1)ke0
+      close(16)
+      
+      !!!============Forward (Euler) scheme============!!!
       do n = 2, 3
 
       !h, u, v update!
-      do i = 2, Nx-1
-       do j = 2, Ny-1
-        do ii = 1, Nx-1
-         do jj = 1, Ny-1
+      do i = 1, Nx-1
+       do j = 1, Ny-1
+        do ii = 2, Nx-1
+         do jj = 2, Ny-1
           h(ii, jj) = h(ii, jj) - (t*(us0(i+1, jj, n-1) - us0(i, jj, n-1) + vs0(ii, j+1, n-1) - vs0(ii, j, n-1)))/d
           u(i, jj) = u(i, jj) + t*(alp0(i, jj+1, n-1)*vs0(ii, j, n-1) + bet0(i, jj+1, n-1)*vs0(ii-1, j+1, n-1) + gam0(i, jj+1, n-1)*vs0(ii-1, j, n-1) + del0(i, jj+1, n-1)*vs0(ii+1, j, n-1) - eps0(ii+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + eps0(ii-1, jj+1, n-1)*us0(i-1, jj+1, n-1)) - (t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii-1, jj+1, n-1) - pe0(ii-1, jj+1, n-1)))/d
           v(ii, j) = v(ii, j) - t*(gam0(i+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + del0(i, jj+1, n-1)*us0(i, jj+1, n-1) + alp0(i, jj-1, n-1)*us0(i, jj-1, n-1) + bet0(i+1, jj-1, n-1)*us0(i+1, jj-1, n-1) + pi0(ii+1, jj+1, n-1)*vs0(ii+1, j+1, n-1) - pi0(ii+1, jj-1, n-1)*vs0(ii+1, jj-1, n-1) -(t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii+1, jj-1, n-1) - pe0(ii+1, jj-1, n-1)))/d
@@ -246,7 +263,41 @@ program shallow_water_model
       vs0(:, :, n) = hv0(:, :, n) * v(:, :)
 
       !vorticity update!
+      do i = 1, Nx
+       do j = 1, Ny
+        do ii = 2, Nx-1
+         do jj = 2, Ny-1
+          vor0(i, j, n) = (u(i, jj-1, n) - u(i, jj+1, n) + v(ii+1, j, n) - v(ii-1, j, n))/d
+         end do
+        end do
+       end do
+      end do
+
+      !hq0 update!
+      do i = 1, Nx
+       do j = 1, Ny
+        do ii = 2, Nx-1
+         do jj = 2, Ny-1
+          hq0(i, j, n) = (h(ii, jj) + h(ii-1, jj) + h(ii-1, jj-1) + h(ii, jj-1))/d
+         end do
+        end do
+       end do
+      end do
+
+      !q0 update!
+      q0(:, :, n) = (vor0(:, :, n) + f)/hq0(:, :, n)
+
+      !pe0 update!
+      do i = 1, Nx
+       pe0(i, :, n) = g*(h(i, :) + hs(i, :))
+      end do
+
+      !ke0 update!
+      ke0(:, :, n) = (u(:, :)*u(:, :) + v(:, :)*v(:, :))/2
+
+      !alp0, bet0, del0, gam0, eps0, pi0 update!
       
+         
       
 
 
