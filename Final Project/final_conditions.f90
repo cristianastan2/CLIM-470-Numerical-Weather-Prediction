@@ -9,7 +9,7 @@ program shallow_water_model
       real, parameter::f = 1e-04 !the Coriolis parameter (s^-1)
       integer, parameter::dt = 1 !time step (s)
       integer, parameter::ntime = 1440 !(s)
-      integer, parameter::nstep = 4
+      integer::nstep
       real, parameter::f1 = 23.0/12.0
       real, parameter::f2 = -4.0/3.0
       real, parameter::f3 = 5.0/12.0
@@ -304,7 +304,7 @@ program shallow_water_model
       do i = 1, Nx-1
        do j = 1, Ny
         v(i, j) = v(i, j) - dt*(gam0(i+1, j, n-1)*us0(i+1, j, n-1) + del0(i, j, n-1)*us0(i, j, n-1) + alp0(i, j-1, n-1)*us0(i, j-1, n-1) &
-                              + bet0(i+1, j-1, n-1)*us0(i+1, j-1, n-1) + pi0(i, j, n-1)*vs0(i, j+1, n-1) - pi0(i, j-1, n-1)*vs0(i, j-1, n-1) &
+                              + bet0(i+1, j-1, n-1)*us0(i+1, j-1, n-1) + pi0(i, j, n-1)*vs0(i, j+1, n-1) - pi0(i, j-1, n-1)*vs0(i, j-1, n-1)) &
                               -(dt*(ke0(i, j, n-1) + pe0(i, j, n-1) - ke0(i, j-1, n-1) - pe0(i, j-1, n-1)))/d
        end do
       end do
@@ -423,14 +423,15 @@ program shallow_water_model
       pe2(:,:) = pe0(:,:,2)
       pe3(:,:) = pe0(:,:,3)
 
+      nstep = 4
       do n = 4, ntime
        nstep = nstep + 1
       !h update!
       do i = 1, Nx-1
        do j = 1, Ny-1
-        h(i, j) = h(i, j) - (fl*dt*(us1(i+1, j) - us1(i, j) + vs1(i, j+1) - vs1(i, j)))/d &
-                          - (f2*dt*(us2(i+1, j) - us2(i, j) + vs2(i, j+1) - vs2(i, j)))/d &
-                          - (f3*dt*(us3(i+1, j) - us3(i, j) + vs3(i, j+1) - vs3(i, j)))/d
+        h(i, j) = h(i, j) - (f1*dt*(us1(i+1, j) - us1(i, j) + vs1(i, j+1) - vs1(i, j)))/d - &
+                           (f2*dt*(us2(i+1, j) - us2(i, j) + vs2(i, j+1) - vs2(i, j)))/d - &
+                           (f3*dt*(us3(i+1, j) - us3(i, j) + vs3(i, j+1) - vs3(i, j)))/d
        end do
       end do
 
@@ -443,8 +444,8 @@ program shallow_water_model
        hv(:, j) = (h(:, j-1) + h(:, j))/2.0
       end do
 
-      us(:, :) = hu3(:, :) * u(:, :)
-      vs(:, :) = hv3(:, :) * v(:, :)
+      us(:, :) = hu(:, :) * u(:, :)
+      vs(:, :) = hv(:, :) * v(:, :)
 
       !u update!
       do i = 2, Nx-1
@@ -487,13 +488,13 @@ program shallow_water_model
       do i = 1, Nx-1
        do j = 2, Ny-1
         v(i, j) = v(i, j) - f1*(dt*(gam1(i+1, j)*us1(i+1, j) + del1(i, j)*us1(i, j) + alp1(i, j-1)*us1(i, j-1) &
-                              + bet1(i+1, j-1)*us1(i+1, j-1) + pi1(i, j)*vs1(i, j+1) - pi1(i, j-1)*vs1(i, j-1) &
+                              + bet1(i+1, j-1)*us1(i+1, j-1) + pi1(i, j)*vs1(i, j+1) - pi1(i, j-1)*vs1(i, j-1)) &
                               -(dt*(ke1(i, j) + pe1(i, j) - ke1(i, j-1) - pe1(i, j-1)))/d) &
                           - f2*(dt*(gam2(i+1, j)*us2(i+1, j) + del2(i, j)*us2(i, j) + alp2(i, j-1)*us2(i, j-1) &
-                              + bet2(i+1, j-1)*us2(i+1, j-1) + pi2(i, j)*vs2(i, j+1) - pi2(i, j-1)*vs2(i, j-1) &
+                              + bet2(i+1, j-1)*us2(i+1, j-1) + pi2(i, j)*vs2(i, j+1) - pi2(i, j-1)*vs2(i, j-1)) &
                               -(dt*(ke2(i, j) + pe2(i, j) - ke2(i, j-1) - pe2(i, j-1)))/d) &
                           - f3*(dt*(gam3(i+1, j)*us3(i+1, j) + del3(i, j)*us3(i, j) + alp3(i, j-1)*us3(i, j-1) &
-                              + bet3(i+1, j-1)*us3(i+1, j-1) + pi3(i, j)*vs3(i, j+1) - pi3(i, j-1)*vs3(i, j-1) &
+                              + bet3(i+1, j-1)*us3(i+1, j-1) + pi3(i, j)*vs3(i, j+1) - pi3(i, j-1)*vs3(i, j-1)) &
                               -(dt*(ke3(i, j) + pe3(i, j) - ke3(i, j-1) - pe3(i, j-1)))/d)
        end do
       end do
