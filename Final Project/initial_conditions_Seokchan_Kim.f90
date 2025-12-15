@@ -7,7 +7,7 @@ program shallow_water_model
       real, parameter::hs_top = 2e+03 !height of the mountain (m)
       real, parameter::g = 9.8 !the acceleration of gravity (m/s^2)
       real, parameter::f = 1e-04 !the Coriolis parameter (s^-1)
-      integer, parameter::t = 1 !time step (s)
+      integer, parameter::dt = 1 !time step (s)
       
       !resolution!
       real:: d !model resolution, ie delta_x, delta_y
@@ -179,7 +179,7 @@ program shallow_water_model
        end do
       end do
 
-      !allocate alp0, bet0, gam0, del0, eps0, pi0 variables!
+      !allocate alp0, bet0, gam0, del0, eps0, pi0 forcing coefficients!
       allocate(alp0(Nx, Ny, 3), bet0(Nx, Ny, 3), gam0(Nx, Ny, 3), del0(Nx, Ny, 3), eps0(Nx, Ny, 3), pi0(Nx, Ny, 3))
       alp0(:, :, 1) = 0.0
       bet0(:, :, 1) = 0.0
@@ -188,29 +188,26 @@ program shallow_water_model
       eps0(:, :, 1) = 0.0
       pi0(:, :, 1) = 0.0
       
-      do i = 2, Nx-1
-       do j = 2, Ny-1
-        alp0(i, j, 1) = (2.0*q0(i+1, j+1, 1) + q0(i, j+1, 1) + 2.0*q0(i, j) + q0(i+1, j, 1))/24.0
-        del0(i, j, 1) = (q0(i+1, j+1, 1) + 2.0*q0(i, j+1, 1) + q0(i, j) + 2.0*q0(i+1, j, 1))/24.0
-        eps0(i, j, 1) = (q0(i+1, j+1, 1) + q0(i, j+1, 1) - q0(i, j) - q0(i+1, j, 1))/24.0
-        pi0(i, j, 1) = (-q0(i+1, j+1, 1) + q0(i, j+1, 1) + q0(i, j) - q0(i+1, j, 1))/24.0
-       !(should be modified)
+      do i = 1, Nx-1
+       do j = 1, Ny-1
+        alp0(i, j, 1) = (2.0*q0(i+1, j+1, 1) + q0(i, j+1, 1) + 2.0*q0(i, j, 1) + q0(i+1, j, 1))/24.0
+        del0(i, j, 1) = (q0(i+1, j+1, 1) + 2.0*q0(i, j+1, 1) + q0(i, j, 1) + 2.0*q0(i+1, j, 1))/24.0
+        eps0(i, j, 1) = (q0(i+1, j+1, 1) + q0(i, j+1, 1) - q0(i, j, 1) - q0(i+1, j, 1))/24.0
+        pi0(i, j, 1) = (-q0(i+1, j+1, 1) + q0(i, j+1, 1) + q0(i, j, 1) - q0(i+1, j, 1))/24.0
        end do
       end do
 
       do j = 1, Ny-1
-       alp0(Nx, j, 1) = (1/24) * (2*q0(2, j+1, 1) + q0(1, j+1, 1) + 2*q0(1, j) + q0(2, j, 1))
-       del0(Nx, j, 1) = (1/24) * (q0(2, j+1, 1) + 2*q0(1, j+1, 1) + q0(1, j) + 2*q0(2, j, 1))
-       eps0(Nx, j, 1) = 0
-       pi0(Nx, j, 1) = 0
-       bet0(1, j, 1) = (1/24) * (q0(1, j+1) + 2*q0(Nx, j+1) + q0(Nx, j) + 2*q0(1, j))
-       gam0(1, j, 1) = (1/24) * (2*q0(1, j+1) + q0(Nx, j+1) + 2*q0(Nx, j) + q0(1, j))
+       alp0(Nx, j, 1) = (2.0*q0(1, j+1, 1) + q0(Nx, j+1, 1) + 2.0*q0(Nx, j, 1) + q0(1, j, 1))/24.0
+       del0(Nx, j, 1) = (q0(1, j+1, 1) + 2.0*q0(Nx, j+1, 1) + q0(Nx, j, 1) + 2.0*q0(1, j, 1))/24.0
+       bet0(1, j, 1) = (q0(1, j+1, 1) + 2.0*q0(Nx, j+1, 1) + q0(Nx, j, 1) + 2.0*q0(1, j, 1))/24.0
+       gam0(1, j, 1) = (2.0*q0(1, j+1, 1) + q0(Nx, j+1, 1) + 2.0*q0(Nx, j, 1) + q0(1, j, 1))/24.0
       end do
 
       do i = 2, Nx
        do j = 1, Ny-1
-        bet0(i, j, 1) = (1/24) * (q0(i, j+1) + 2*q0(i-1, j+1) + q0(i-1, j) + 2*q0(i, j))
-        gam0(i, j, 1) = (1/24) * (2*q0(i, j+1) + q0(i-1, j+1) + 2*q0(i-1, j) + q0(i, j))
+        bet0(i, j, 1) = (q0(i, j+1, 1) + 2.0*q0(i-1, j+1, 1) + q0(i-1, j, 1) + 2.0*q0(i, j, 1))/24.0
+        gam0(i, j, 1) = (2.0*q0(i, j+1, 1) + q0(i-1, j+1, 1) + 2.0*q0(i-1, j, 1) + q0(i, j, 1))/24.0
        end do
       end do
 
@@ -236,32 +233,39 @@ program shallow_water_model
       !h, u, v update!
       do i = 1, Nx-1
        do j = 1, Ny-1
-        do ii = 2, Nx-1
-         do jj = 2, Ny-1
-          h(ii, jj) = h(ii, jj) - (t*(us0(i+1, jj, n-1) - us0(i, jj, n-1) + vs0(ii, j+1, n-1) - vs0(ii, j, n-1)))/d
-          u(i, jj) = u(i, jj) + t*(alp0(i, jj+1, n-1)*vs0(ii, j, n-1) + bet0(i, jj+1, n-1)*vs0(ii-1, j+1, n-1) + gam0(i, jj+1, n-1)*vs0(ii-1, j, n-1) + del0(i, jj+1, n-1)*vs0(ii+1, j, n-1) - eps0(ii+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + eps0(ii-1, jj+1, n-1)*us0(i-1, jj+1, n-1)) - (t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii-1, jj+1, n-1) - pe0(ii-1, jj+1, n-1)))/d
-          v(ii, j) = v(ii, j) - t*(gam0(i+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + del0(i, jj+1, n-1)*us0(i, jj+1, n-1) + alp0(i, jj-1, n-1)*us0(i, jj-1, n-1) + bet0(i+1, jj-1, n-1)*us0(i+1, jj-1, n-1) + pi0(ii+1, jj+1, n-1)*vs0(ii+1, j+1, n-1) - pi0(ii+1, jj-1, n-1)*vs0(ii+1, jj-1, n-1) -(t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii+1, jj-1, n-1) - pe0(ii+1, jj-1, n-1)))/d
+        do ii = 1, Nx-1
+         do jj = 1, Ny-1
+          h(ii, jj) = h(ii, jj) - (dt*(us0(i+1, jj, n-1) - us0(i, jj, n-1) + vs0(ii, j+1, n-1) - vs0(ii, j, n-1)))/d   
          end do
         end do
        end do 
       end do
-
+      
       !hu0, hv0, us0, vs0 update!
-      hu0(1, :, n) = (h(Nx-1, :) + h(1, :))/2.0
+      hu0(1, :, n) = (h(Nx, :) + h(2, :))/2.0
+      hu0(Nx, :, n) = (h(Nx-1, :) + h(1, :))/2.0
 
-      do ii = 2, Nx-1
-       hu0(ii, :, n) = (h(ii-1, :) + h(ii, :))/2.0
+      do i = 2, Nx-1
+       hu0(i, :, n) = (h(i-1, :) + h(i, :))/2.0
       end do
 
-      hv0(:, 1, n) = (h(:, Ny-1) + h(:, 1))/2.0
+      hv0(:, 1, n) = (h(:, Ny) + h(:, 2))/2.0
+      hv0(:, Ny, n) = (h(:, Ny-1) + h(:, 1))/2.0
 
-      do jj = 2, Ny-1
-       hv0(:, jj, n) = (h(:, jj-1) + h(:, jj))/2.0
+      do j = 2, Ny-1
+       hv0(:, j, n) = (h(:, j-1) + h(:, j+1))/2.0
       end do
 
       us0(:, :, n) = hu0(:, :, n) * u(:, :)
       vs0(:, :, n) = hv0(:, :, n) * v(:, :)
 
+      do i = 2, Nx-1
+       do j = 1, Ny-1
+        do ii = 2, Nx
+         do jj = 1, Ny
+          u(i, jj) = u(i, jj) + dt*(alp0(i, jj, n-1)*vs0(ii, j+1, n-1) + bet0(i, jj, n-1)*vs0(ii-1, j+1, n-1) + gam0(i, jj, n-1)*vs0(ii-1, j, n-1) + del0(i, jj, n-1)*vs0(ii, j, n-1) - eps0(ii, jj, n-1)*us0(i+1, jj, n-1) + eps0(ii-1, jj, n-1)*us0(i-1, jj, n-1)) - (t*(ke0(ii, jj, n-1) + pe0(ii, jj, n-1) - ke0(ii-1, jj, n-1) - pe0(ii-1, jj, n-1)))/d
+          v(ii, j) = v(ii, j) - dt*(gam0(i+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + del0(i, jj+1, n-1)*us0(i, jj+1, n-1) + alp0(i, jj-1, n-1)*us0(i, jj-1, n-1) + bet0(i+1, jj-1, n-1)*us0(i+1, jj-1, n-1) + pi0(ii+1, jj+1, n-1)*vs0(ii+1, j+1, n-1) - pi0(ii+1, jj-1, n-1)*vs0(ii+1, jj-1, n-1) -(t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii+1, jj-1, n-1) - pe0(ii+1, jj-1, n-1)))/d
+      
       !vorticity update!
       do i = 1, Nx
        do j = 1, Ny
@@ -293,7 +297,11 @@ program shallow_water_model
       end do
 
       !ke0 update!
-      ke0(:, :, n) = (u(:, :)*u(:, :) + v(:, :)*v(:, :))/2
+      do i = 1, Nx-1
+       do j = 1, Ny-1
+        do ii = 1, Nx
+         do jj = 1, Ny
+          ke0(ii, jj, n) = (u(:, :)*u(:, :) + v(:, :)*v(:, :))/2.0
 
       !alp0, bet0, del0, gam0, eps0, pi0 update!
       
@@ -305,6 +313,10 @@ program shallow_water_model
       !set up for progressing Adams-Bashforth third order scheme!
       integer::ntime = 1440
       integer::nstep = 4
+      
+      real::f1 = 23.0/12.0
+      real::f2 = -4.0/3.0
+      real::f3 = 5.0/12.0
       
       real, allocatable::us1(:, :), us2(:, :), us3(:, :)
       real, allocatable::vs1(:, :), vs2(:, :), vs3(:, :)
