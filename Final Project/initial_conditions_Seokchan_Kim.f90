@@ -300,8 +300,90 @@ program shallow_water_model
          
       
 
+      end do
+      
+      !set up for progressing Adams-Bashforth third order scheme!
+      integer::ntime = 1440
+      integer::nstep = 4
+      
+      real, allocatable::us1(:, :), us2(:, :), us3(:, :)
+      real, allocatable::vs1(:, :), vs2(:, :), vs3(:, :)
+      real, allocatable::hu1(:, :), hu2(:, :), hu3(:, :)
+      real, allocatable::hv1(:, :), hv2(:, :), hv3(:, :)
+      real, allocatable::alp1(:, :), alp2(:, :), alp3(:, :)
+      real, allocatable::bet1(:, :), bet2(:, :), bet3(:, :)
+      real, allocatable::gam1(:, :), gam2(:, :), gam3(:, :)
+      real, allocatable::del1(:, :), del2(:, :), del3(:, :)
+      real, allocatable::eps1(:, :), eps2(:, :), eps3(:, :)
+      real, allocatable::pi1(:, :), pi2(:, :), pi3(:, :)
+      real, allocatable::pe1(:, :), pe2(:, :), pe3(:, :)
+      real, allocatable::ke1(:, :), ke2(:, :), ke3(:, :)
 
+      allocate(us1(Nx, Ny), us2(Nx, Ny), us3(Nx, Ny), vs1(Nx, Ny), vs2(Nx, Ny), vs3(Nx, Ny), hu1(Nx, Ny), hu2(Nx, Ny), hu3(Nx, Ny), hv1(Nx, Ny), hv2(Nx, Ny), hv3(Nx, Ny))
+      allocate(alp1(Nx, Ny), alp2(Nx, Ny), alp3(Nx, Ny), bet1(Nx, Ny), bet2(Nx, Ny), bet3(Nx, Ny), gam1(Nx, Ny), gam2(Nx, Ny), gam3(Nx, Ny))
+      allocate(del1(Nx, Ny), del2(Nx, Ny), del3(Nx, Ny), eps1(Nx, Ny), eps2(Nx, Ny), eps3(Nx, Ny), pi1(Nx, Ny), pi2(Nx, Ny), pi3(Nx, Ny), pe1(Nx, Ny), pe2(Nx, Ny), pe3(Nx, Ny), ke1(Nx, Ny), ke2(Nx, Ny), ke3(Nx, Ny))
 
+      us1(:,:) = us0(:,:,1)
+      us2(:,:) = us0(:,:,2)
+      us3(:,:) = us0(:,:,3)
+      vs1(:,:) = vs0(:,:,1)
+      vs2(:,:) = vs0(:,:,2)
+      vs3(:,:) = vs0(:,:,3)
+      hu1(:,:) = hu0(:,:,1)
+      hu2(:,:) = hu0(:,:,2)
+      hu3(:,:) = hu0(:,:,3)
+      hv1(:,:) = hv0(:,:,1)
+      hv2(:,:) = hv0(:,:,2)
+      hv3(:,:) = hv0(:,:,3)
+      alp1(:,:) = alp0(:,:,1)
+      alp2(:,:) = alp0(:,:,2)
+      alp3(:,:) = alp0(:,:,3)
+      bet1(:,:) = bet0(:,:,1)
+      bet2(:,:) = bet0(:,:,2)
+      bet3(:,:) = bet0(:,:,3)
+      gam1(:,:) = gam0(:,:,1)
+      gam2(:,:) = gam0(:,:,2)
+      gam3(:,:) = gam0(:,:,3)
+      del1(:,:) = del0(:,:,1)
+      del2(:,:) = del0(:,:,2)
+      del3(:,:) = del0(:,:,3)
+      eps1(:,:) = eps0(:,:,1)
+      eps2(:,:) = eps0(:,:,2)
+      eps3(:,:) = eps0(:,:,3)
+      pi1(:,:) = pi0(:,:,1)
+      pi2(:,:) = pi0(:,:,2)
+      pi3(:,:) = pi0(:,:,3)
+      ke1(:,:) = ke0(:,:,1)
+      ke2(:,:) = ke0(:,:,2)
+      ke3(:,:) = ke0(:,:,3)
+      pe1(:,:) = pe0(:,:,1)
+      pe2(:,:) = pe0(:,:,2)
+      pe3(:,:) = pe0(:,:,3)
+
+      !!!============Adams-bashforth third order scheme============!!!
+      do n = 4, ntime
+       nstep = nstep + 1
+       do 
+
+      !create the final data (u, v, h) files for each resolutions!
+      if (nstep == 1440) then
+       open(20, file='u_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+       write(20, rec=1)u
+       close(20)
+
+       open(21, file='v_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+       write(21, rec=1)v
+       close(21)
+
+       open(22, file='h_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+       write(22, rec=1)h
+       close(22)
+      endif
+      
+      
       end do
 
 end program shallow_water_model
