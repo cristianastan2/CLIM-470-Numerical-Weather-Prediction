@@ -28,9 +28,9 @@ program shallow_water_model
       real, allocatable::alp0(:,:,:), bet0(:,:,:), gam0(:,:,:), del0(:,:,:), eps0(:,:,:), pi0(:,:,:) !constant
 
       !resolution!
-       d = 5e+05
-!      d = 2.5e+05
-!      d = 1.25e+05
+      !d = 5e+05
+      !d = 2.5e+05
+      d = 1.25e+05
 
       Nx = Lx/d + 1
       Ny = Ly/d + 1
@@ -94,21 +94,21 @@ program shallow_water_model
       vs0(1:Nx, 1:Ny, 1) = hv0(1:Nx, 1:Ny, 1)*v(1:Nx, 1:Ny)
 
       !create the initial data (u, v, h) files for each resolutions!
-!      open(11, file='u_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
-!              access='direct',recl=4*Nx*Ny,iostat=ierr)
-!      write(11, rec=1)u
-!      close(11)
-!      
-!      open(12, file='v_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
-!              access='direct',recl=4*Nx*Ny,iostat=ierr)
-!      write(12, rec=1)v
-!      close(12)
-!
-!      open(13, file='h_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
-!              access='direct',recl=4*Nx*Ny,iostat=ierr)
-!      write(13, rec=1)h
-!      close(13)
-!
+      open(11, file='u_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+      write(11, rec=1)u
+      close(11)
+      
+      open(12, file='v_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+      write(12, rec=1)v
+      close(12)
+
+      open(13, file='h_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+              access='direct',recl=4*Nx*Ny,iostat=ierr)
+      write(13, rec=1)h
+      close(13)
+
       !allocate vor0 variable!
       allocate(vor0(Nx,Ny,3))
       do i = 1, Nx
@@ -159,7 +159,7 @@ program shallow_water_model
       allocate(pe0(Nx,Ny,3))
       do i = 1, Nx
        do j = 1, Ny
-        pe0(i,j,1) = (g * (hs(i,j) + h(i,j)))/100 !e+02
+        pe0(i,j,1) = g * (hs(i,j) + h(i,j))
        end do
       end do
 
@@ -180,133 +180,128 @@ program shallow_water_model
       end do
 
       !allocate alp0, bet0, gam0, del0, eps0, pi0 variables!
-!      allocate(alp0(Nx, Ny, 3), bet0(Nx, Ny, 3), gam0(Nx, Ny, 3), del0(Nx, Ny, 3), eps0(Nx, Ny, 3), pi0(Nx, Ny, 3))
-!      alp0(:, :, 1) = 0.0
-!      bet0(:, :, 1) = 0.0
-!      gam0(:, :, 1) = 0.0
-!      del0(:, :, 1) = 0.0
-!      eps0(:, :, 1) = 0.0
-!      pi0(:, :, 1) = 0.0
-!      
-!      do i = 2, Nx-1
-!       do j = 2, Ny-1
-!        alp0(i, j, 1) = (2.0*q0(i+1, j+1, 1) + q0(i, j+1, 1) + 2.0*q0(i, j) + q0(i+1, j, 1))/24.0
-!        del0(i, j, 1) = (q0(i+1, j+1, 1) + 2.0*q0(i, j+1, 1) + q0(i, j) + 2.0*q0(i+1, j, 1))/24.0
-!        eps0(i, j, 1) = (q0(i+1, j+1, 1) + q0(i, j+1, 1) - q0(i, j) - q0(i+1, j, 1))/24.0
-!        pi0(i, j, 1) = (-q0(i+1, j+1, 1) + q0(i, j+1, 1) + q0(i, j) - q0(i+1, j, 1))/24.0
-!       !(should be modified)
-!       end do
-!      end do
-!
-!      do j = 1, Ny-1
-!       alp0(Nx, j, 1) = (1/24) * (2*q0(2, j+1, 1) + q0(1, j+1, 1) + 2*q0(1, j) + q0(2, j, 1))
-!       del0(Nx, j, 1) = (1/24) * (q0(2, j+1, 1) + 2*q0(1, j+1, 1) + q0(1, j) + 2*q0(2, j, 1))
-!       eps0(Nx, j, 1) = 0
-!       pi0(Nx, j, 1) = 0
-!       bet0(1, j, 1) = (1/24) * (q0(1, j+1) + 2*q0(Nx, j+1) + q0(Nx, j) + 2*q0(1, j))
-!       gam0(1, j, 1) = (1/24) * (2*q0(1, j+1) + q0(Nx, j+1) + 2*q0(Nx, j) + q0(1, j))
-!      end do
-!
-!      do i = 2, Nx
-!       do j = 1, Ny-1
-!        bet0(i, j, 1) = (1/24) * (q0(i, j+1) + 2*q0(i-1, j+1) + q0(i-1, j) + 2*q0(i, j))
-!        gam0(i, j, 1) = (1/24) * (2*q0(i, j+1) + q0(i-1, j+1) + 2*q0(i-1, j) + q0(i, j))
-!       end do
-!      end do
+      allocate(alp0(Nx, Ny, 3), bet0(Nx, Ny, 3), gam0(Nx, Ny, 3), del0(Nx, Ny, 3), eps0(Nx, Ny, 3), pi0(Nx, Ny, 3))
+      alp0(:, :, 1) = 0.0
+      bet0(:, :, 1) = 0.0
+      gam0(:, :, 1) = 0.0
+      del0(:, :, 1) = 0.0
+      eps0(:, :, 1) = 0.0
+      pi0(:, :, 1) = 0.0
+      
+      do i = 2, Nx-1
+       do j = 2, Ny-1
+        alp0(i, j, 1) = (2.0*q0(i+1, j+1, 1) + q0(i, j+1, 1) + 2.0*q0(i, j) + q0(i+1, j, 1))/24.0
+        del0(i, j, 1) = (q0(i+1, j+1, 1) + 2.0*q0(i, j+1, 1) + q0(i, j) + 2.0*q0(i+1, j, 1))/24.0
+        eps0(i, j, 1) = (q0(i+1, j+1, 1) + q0(i, j+1, 1) - q0(i, j) - q0(i+1, j, 1))/24.0
+        pi0(i, j, 1) = (-q0(i+1, j+1, 1) + q0(i, j+1, 1) + q0(i, j) - q0(i+1, j, 1))/24.0
+       !(should be modified)
+       end do
+      end do
+
+      do j = 1, Ny-1
+       alp0(Nx, j, 1) = (1/24) * (2*q0(2, j+1, 1) + q0(1, j+1, 1) + 2*q0(1, j) + q0(2, j, 1))
+       del0(Nx, j, 1) = (1/24) * (q0(2, j+1, 1) + 2*q0(1, j+1, 1) + q0(1, j) + 2*q0(2, j, 1))
+       eps0(Nx, j, 1) = 0
+       pi0(Nx, j, 1) = 0
+       bet0(1, j, 1) = (1/24) * (q0(1, j+1) + 2*q0(Nx, j+1) + q0(Nx, j) + 2*q0(1, j))
+       gam0(1, j, 1) = (1/24) * (2*q0(1, j+1) + q0(Nx, j+1) + 2*q0(Nx, j) + q0(1, j))
+      end do
+
+      do i = 2, Nx
+       do j = 1, Ny-1
+        bet0(i, j, 1) = (1/24) * (q0(i, j+1) + 2*q0(i-1, j+1) + q0(i-1, j) + 2*q0(i, j))
+        gam0(i, j, 1) = (1/24) * (2*q0(i, j+1) + q0(i-1, j+1) + 2*q0(i-1, j) + q0(i, j))
+       end do
+      end do
 
       !create the initial data (vor, pe0, ke0) files for each resolutions!
-write(*,*) pe0
-
-      open(14, file='vor_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
+      open(14, file='vor_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
-      write(14, rec=1)vor0
+      write(14, rec=1)vor
       close(14)
       
-      open(15, file='pe0_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
+      open(15, file='pe0_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(15, rec=1)pe0
       close(15)
 
-      open(16, file='ke0_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
+      open(16, file='ke0_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(16, rec=1)ke0
       close(16)
       
       !!!============Forward (Euler) scheme============!!!
-!      do n = 2, 3
-!
-!      !h, u, v update!
-!      do i = 1, Nx-1
-!       do j = 1, Ny-1
-!        do ii = 2, Nx-1
-!         do jj = 2, Ny-1
-!          h(ii, jj) = h(ii, jj) - (t*(us0(i+1, jj, n-1) - us0(i, jj, n-1) + vs0(ii, j+1, n-1) - vs0(ii, j, n-1)))/d
-!          u(i, jj) = u(i, jj) + t*(alp0(i, jj+1, n-1)*vs0(ii, j, n-1) + bet0(i, jj+1, n-1)*vs0(ii-1, j+1, n-1) + gam0(i, jj+1, n-1)*vs0(ii-1, j, n-1) + del0(i, jj+1, n-1)*vs0(ii+1, j, n-1) - eps0(ii+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + eps0(ii-1, jj+1, n-1)*us0(i-1, jj+1, n-1)) - (t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii-1, jj+1, n-1) - pe0(ii-1, jj+1, n-1)))/d
-!          v(ii, j) = v(ii, j) - t*(gam0(i+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + del0(i, jj+1, n-1)*us0(i, jj+1, n-1) + alp0(i, jj-1,
-!          n-1)*us0(i, jj-1, n-1) + bet0(i+1, jj-1, n-1)*us0(i+1, jj-1, n-1) + pi0(ii+1, jj+1, n-1)*vs0(ii+1, j+1, n-1) - pi0(ii+1,
-!          jj-1, n-1)*vs0(ii+1, jj-1, n-1) -(t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii+1, jj-1, n-1) - pe0(ii+1, jj-1,
-!          n-1)))/d)
-!         end do
-!        end do
-!       end do 
-!      end do
-!
-!      !hu0, hv0, us0, vs0 update!
-!      hu0(1, :, n) = (h(Nx-1, :) + h(1, :))/2.0
-!
-!      do ii = 2, Nx-1
-!       hu0(ii, :, n) = (h(ii-1, :) + h(ii, :))/2.0
-!      end do
-!
-!      hv0(:, 1, n) = (h(:, Ny-1) + h(:, 1))/2.0
-!
-!      do jj = 2, Ny-1
-!       hv0(:, jj, n) = (h(:, jj-1) + h(:, jj))/2.0
-!      end do
-!
-!      us0(:, :, n) = hu0(:, :, n) * u(:, :)
-!      vs0(:, :, n) = hv0(:, :, n) * v(:, :)
-!
-!      !vorticity update!
-!      do i = 1, Nx
-!       do j = 1, Ny
-!        do ii = 2, Nx-1
-!         do jj = 2, Ny-1
-!          vor0(i, j, n) = (u(i, jj-1, n) - u(i, jj+1, n) + v(ii+1, j, n) - v(ii-1, j, n))/d
-!         end do
-!        end do
-!       end do
-!      end do
-!
-!      !hq0 update!
-!      do i = 1, Nx
-!       do j = 1, Ny
-!        do ii = 2, Nx-1
-!         do jj = 2, Ny-1
-!          hq0(i, j, n) = (h(ii, jj) + h(ii-1, jj) + h(ii-1, jj-1) + h(ii, jj-1))/d
-!         end do
-!        end do
-!       end do
-!      end do
-!
-!      !q0 update!
-!      q0(:, :, n) = (vor0(:, :, n) + f)/hq0(:, :, n)
-!
-!      !pe0 update!
-!      do i = 1, Nx
-!       pe0(i, :, n) = g*(h(i, :) + hs(i, :))
-!      end do
-!
-!      !ke0 update!
-!      ke0(:, :, n) = (u(:, :)*u(:, :) + v(:, :)*v(:, :))/2
-!
-!      !alp0, bet0, del0, gam0, eps0, pi0 update!
+      do n = 2, 3
+
+      !h, u, v update!
+      do i = 1, Nx-1
+       do j = 1, Ny-1
+        do ii = 2, Nx-1
+         do jj = 2, Ny-1
+          h(ii, jj) = h(ii, jj) - (t*(us0(i+1, jj, n-1) - us0(i, jj, n-1) + vs0(ii, j+1, n-1) - vs0(ii, j, n-1)))/d
+          u(i, jj) = u(i, jj) + t*(alp0(i, jj+1, n-1)*vs0(ii, j, n-1) + bet0(i, jj+1, n-1)*vs0(ii-1, j+1, n-1) + gam0(i, jj+1, n-1)*vs0(ii-1, j, n-1) + del0(i, jj+1, n-1)*vs0(ii+1, j, n-1) - eps0(ii+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + eps0(ii-1, jj+1, n-1)*us0(i-1, jj+1, n-1)) - (t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii-1, jj+1, n-1) - pe0(ii-1, jj+1, n-1)))/d
+          v(ii, j) = v(ii, j) - t*(gam0(i+1, jj+1, n-1)*us0(i+1, jj+1, n-1) + del0(i, jj+1, n-1)*us0(i, jj+1, n-1) + alp0(i, jj-1, n-1)*us0(i, jj-1, n-1) + bet0(i+1, jj-1, n-1)*us0(i+1, jj-1, n-1) + pi0(ii+1, jj+1, n-1)*vs0(ii+1, j+1, n-1) - pi0(ii+1, jj-1, n-1)*vs0(ii+1, jj-1, n-1) -(t*(ke0(ii+1, jj+1, n-1) + pe0(ii+1, jj+1, n-1) - ke0(ii+1, jj-1, n-1) - pe0(ii+1, jj-1, n-1)))/d
+         end do
+        end do
+       end do 
+      end do
+
+      !hu0, hv0, us0, vs0 update!
+      hu0(1, :, n) = (h(Nx-1, :) + h(1, :))/2.0
+
+      do ii = 2, Nx-1
+       hu0(ii, :, n) = (h(ii-1, :) + h(ii, :))/2.0
+      end do
+
+      hv0(:, 1, n) = (h(:, Ny-1) + h(:, 1))/2.0
+
+      do jj = 2, Ny-1
+       hv0(:, jj, n) = (h(:, jj-1) + h(:, jj))/2.0
+      end do
+
+      us0(:, :, n) = hu0(:, :, n) * u(:, :)
+      vs0(:, :, n) = hv0(:, :, n) * v(:, :)
+
+      !vorticity update!
+      do i = 1, Nx
+       do j = 1, Ny
+        do ii = 2, Nx-1
+         do jj = 2, Ny-1
+          vor0(i, j, n) = (u(i, jj-1, n) - u(i, jj+1, n) + v(ii+1, j, n) - v(ii-1, j, n))/d
+         end do
+        end do
+       end do
+      end do
+
+      !hq0 update!
+      do i = 1, Nx
+       do j = 1, Ny
+        do ii = 2, Nx-1
+         do jj = 2, Ny-1
+          hq0(i, j, n) = (h(ii, jj) + h(ii-1, jj) + h(ii-1, jj-1) + h(ii, jj-1))/d
+         end do
+        end do
+       end do
+      end do
+
+      !q0 update!
+      q0(:, :, n) = (vor0(:, :, n) + f)/hq0(:, :, n)
+
+      !pe0 update!
+      do i = 1, Nx
+       pe0(i, :, n) = g*(h(i, :) + hs(i, :))
+      end do
+
+      !ke0 update!
+      ke0(:, :, n) = (u(:, :)*u(:, :) + v(:, :)*v(:, :))/2
+
+      !alp0, bet0, del0, gam0, eps0, pi0 update!
       
          
       
 
 
 
-!      end do
+      end do
 
 end program shallow_water_model
