@@ -8,6 +8,11 @@ program shallow_water_model
       real, parameter::g = 9.8 !the acceleration of gravity (m/s^2)
       real, parameter::f = 1e-04 !the Coriolis parameter (s^-1)
       integer, parameter::dt = 1 !time step (s)
+      integer, parameter::ntime = 1440 !(s)
+      integer, parameter::nstep = 4
+      real, parameter::f1 = 23.0/12.0
+      real, parameter::f2 = -4.0/3.0
+      real, parameter::f3 = 5.0/12.0
       
       !resolution!
       real:: d !model resolution, ie delta_x, delta_y
@@ -26,6 +31,28 @@ program shallow_water_model
       real, allocatable::hu0(:,:,:), hv0(:,:,:), us0(:,:,:), vs0(:,:,:), hq0(:,:,:)
       real, allocatable::vor0(:,:,:), q0(:,:,:), pe0(:,:,:), ke0(:,:,:)
       real, allocatable::alp0(:,:,:), bet0(:,:,:), gam0(:,:,:), del0(:,:,:), eps0(:,:,:), pi0(:,:,:) !constant
+
+      !set up for progressing Adams-Bashforth third order scheme!
+      real, allocatable::us1(:, :), us2(:, :), us3(:, :), us(:, :)
+      real, allocatable::vs1(:, :), vs2(:, :), vs3(:, :), vs(:, :)
+      real, allocatable::hu(:, :)
+      real, allocatable::hv(:, :)
+      real, allocatable::alp1(:, :), alp2(:, :), alp3(:, :), alp(:, :)
+      real, allocatable::bet1(:, :), bet2(:, :), bet3(:, :), bet(:, :)
+      real, allocatable::gam1(:, :), gam2(:, :), gam3(:, :), gam(:, :)
+      real, allocatable::del1(:, :), del2(:, :), del3(:, :), del(:, :)
+      real, allocatable::eps1(:, :), eps2(:, :), eps3(:, :), eps(:, :)
+      real, allocatable::pi1(:, :), pi2(:, :), pi3(:, :), pi(:, :)
+      real, allocatable::pe1(:, :), pe2(:, :), pe3(:, :)
+      real, allocatable::ke1(:, :), ke2(:, :), ke3(:, :)
+      real, allocatable::hq(:, :)
+
+      !allocate variables for Adams-bashforth scheme!
+      allocate(us1(Nx, Ny), us2(Nx, Ny), us3(Nx, Ny), vs1(Nx, Ny), vs2(Nx, Ny), vs3(Nx, Ny), hu(Nx, Ny), hv(Nx, Ny))
+      allocate(alp1(Nx, Ny), alp2(Nx, Ny), alp3(Nx, Ny), bet1(Nx, Ny), bet2(Nx, Ny), bet3(Nx, Ny), gam1(Nx, Ny), gam2(Nx, Ny), gam3(Nx, Ny))
+      allocate(del1(Nx, Ny), del2(Nx, Ny), del3(Nx, Ny), eps1(Nx, Ny), eps2(Nx, Ny), eps3(Nx, Ny), pi1(Nx, Ny), pi2(Nx, Ny), pi3(Nx, Ny), pe1(Nx, Ny), pe2(Nx, Ny), pe3(Nx, Ny), ke1(Nx, Ny), ke2(Nx, Ny), ke3(Nx, Ny))
+      allocate(hq(Nx, Ny), vor(Nx, Ny), us(Nx, Ny), vs(Nx, Ny), q(Nx, Ny), pe(Nx, Ny), ke(Nx, Ny))
+      allocate(alp(Nx,Ny), bet(Nx,Ny), del(Nx,Ny), gam(Nx,Ny), eps(Nx,Ny), pi(Nx,Ny))
 
       !resolution!
       !d = 5e+05
@@ -285,8 +312,8 @@ program shallow_water_model
       !vorticity update!
       vor0(1, 1, n) = (-u(1, 1) + v(1, 1) - v(Nx-1, 1))/d
       vor0(1, Ny, n) = (u(1, Ny-1) + v(1, Ny) - v(Nx-1, Ny))/d
-      vor0(Nx, 1, n) = (-u(Nx, 1) + v(1, 1) - v(Nx-1, 1))d
-      vor0(Nx, Ny, n) = (u(Nx, Ny-1) + v(1, Ny) - v(Nx-1, Ny))d
+      vor0(Nx, 1, n) = (-u(Nx, 1) + v(1, 1) - v(Nx-1, 1))/d
+      vor0(Nx, Ny, n) = (u(Nx, Ny-1) + v(1, Ny) - v(Nx-1, Ny))/d
 
       do j = 2, Ny-1
        vor0(1, j, n) = (u(1, j-1) - u(1, j) + v(1, j) - v(Nx-1, j))/d
@@ -364,34 +391,7 @@ program shallow_water_model
       end do
       end do
       
-      !set up for progressing Adams-Bashforth third order scheme!
-      integer::ntime = 1440
-      integer::nstep = 4
-      
-      real::f1 = 23.0/12.0
-      real::f2 = -4.0/3.0
-      real::f3 = 5.0/12.0
-      
-      real, allocatable::us1(:, :), us2(:, :), us3(:, :), us(:, :)
-      real, allocatable::vs1(:, :), vs2(:, :), vs3(:, :), vs(:, :)
-      real, allocatable::hu(:, :)
-      real, allocatable::hv(:, :)
-      real, allocatable::alp1(:, :), alp2(:, :), alp3(:, :), alp(:, :)
-      real, allocatable::bet1(:, :), bet2(:, :), bet3(:, :), bet(:, :)
-      real, allocatable::gam1(:, :), gam2(:, :), gam3(:, :), gam(:, :)
-      real, allocatable::del1(:, :), del2(:, :), del3(:, :), del(:, :)
-      real, allocatable::eps1(:, :), eps2(:, :), eps3(:, :), eps(:, :)
-      real, allocatable::pi1(:, :), pi2(:, :), pi3(:, :), pi(:, :)
-      real, allocatable::pe1(:, :), pe2(:, :), pe3(:, :)
-      real, allocatable::ke1(:, :), ke2(:, :), ke3(:, :)
-      real, allocatable::hq(:, :)
-
-      allocate(us1(Nx, Ny), us2(Nx, Ny), us3(Nx, Ny), vs1(Nx, Ny), vs2(Nx, Ny), vs3(Nx, Ny), hu(Nx, Ny), hv(Nx, Ny))
-      allocate(alp1(Nx, Ny), alp2(Nx, Ny), alp3(Nx, Ny), bet1(Nx, Ny), bet2(Nx, Ny), bet3(Nx, Ny), gam1(Nx, Ny), gam2(Nx, Ny), gam3(Nx, Ny))
-      allocate(del1(Nx, Ny), del2(Nx, Ny), del3(Nx, Ny), eps1(Nx, Ny), eps2(Nx, Ny), eps3(Nx, Ny), pi1(Nx, Ny), pi2(Nx, Ny), pi3(Nx, Ny), pe1(Nx, Ny), pe2(Nx, Ny), pe3(Nx, Ny), ke1(Nx, Ny), ke2(Nx, Ny), ke3(Nx, Ny))
-      allocate(hq(Nx, Ny), vor(Nx, Ny), us(Nx, Ny), vs(Nx, Ny), q(Nx, Ny), pe(Nx, Ny), ke(Nx, Ny))
-      allocate(alp(Nx,Ny), bet(Nx,Ny), del(Nx,Ny), gam(Nx,Ny), eps(Nx,Ny), pi(Nx,Ny))
-      
+      !!!============Adams-bashforth third order scheme============!!!
       us1(:,:) = us0(:,:,1)
       us2(:,:) = us0(:,:,2)
       us3(:,:) = us0(:,:,3)
@@ -423,7 +423,6 @@ program shallow_water_model
       pe2(:,:) = pe0(:,:,2)
       pe3(:,:) = pe0(:,:,3)
 
-      !!!============Adams-bashforth third order scheme============!!!
       do n = 4, ntime
        nstep = nstep + 1
       !h update!
@@ -502,8 +501,8 @@ program shallow_water_model
       !vorticity update!
       vor(1, 1) = (-u(1, 1) + v(1, 1) - v(Nx-1, 1))/d
       vor(1, Ny) = (u(1, Ny-1) + v(1, Ny) - v(Nx-1, Ny))/d
-      vor(Nx, 1) = (-u(Nx, 1) + v(1, 1) - v(Nx-1, 1))d
-      vor(Nx, Ny) = (u(Nx, Ny-1) + v(1, Ny) - v(Nx-1, Ny))d
+      vor(Nx, 1) = (-u(Nx, 1) + v(1, 1) - v(Nx-1, 1))/d
+      vor(Nx, Ny) = (u(Nx, Ny-1) + v(1, Ny) - v(Nx-1, Ny))/d
 
       do j = 2, Ny-1
        vor(1, j) = (u(1, j-1) - u(1, j) + v(1, j) - v(Nx-1, j))/d
