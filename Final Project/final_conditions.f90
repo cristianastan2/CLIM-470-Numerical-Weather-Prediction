@@ -48,9 +48,9 @@ program shallow_water_model
       real, allocatable::hq(:, :)
 
       !resolution!
-      !d = 5e+05
-      !d = 2.5e+05
-      d = 1.25e+05
+      d = 5e+05
+ !     d = 2.5e+05
+ !     d = 1.25e+05
 
       Nx = Lx/d + 1
       Ny = Ly/d + 1
@@ -114,17 +114,17 @@ program shallow_water_model
       vs0(1:Nx, 1:Ny, 1) = hv0(1:Nx, 1:Ny, 1)*v(1:Nx, 1:Ny)
 
       !create the initial data (u, v, h) files for each resolutions!
-      open(11, file='u_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+      open(11, file='u_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(11, rec=1)u
       close(11)
       
-      open(12, file='v_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+      open(12, file='v_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(12, rec=1)v
       close(12)
 
-      open(13, file='h_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+      open(13, file='h_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(13, rec=1)h
       close(13)
@@ -232,17 +232,17 @@ program shallow_water_model
       end do
 
       !create the initial data (vor, pe0, ke0) files for each resolutions!
-      open(14, file='vor_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+      open(14, file='vor_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(14, rec=1)vor0
       close(14)
       
-      open(15, file='pe0_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+      open(15, file='pe0_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(15, rec=1)pe0
       close(15)
 
-      open(16, file='ke0_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
+      open(16, file='ke0_initial_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
       write(16, rec=1)ke0
       close(16)
@@ -613,32 +613,32 @@ program shallow_water_model
       
       !create the final data (u, v, h) files for each resolutions!
       if (nstep == 1440) then
-       open(20, file='u_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+       open(20, file='u_final_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
        write(20, rec=1)u
        close(20)
 
-       open(21, file='v_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+       open(21, file='v_final_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
        write(21, rec=1)v
        close(21)
 
-       open(22, file='h_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+       open(22, file='h_final_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
        write(22, rec=1)h
        close(22)
 
-       open(23, file='pe_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+       open(23, file='pe_final_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
        write(23, rec=1)pe
        close(23)
 
-       open(24, file='ke_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+       open(24, file='ke_final_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
        write(24, rec=1)ke
        close(24)
 
-       open(25, file='vor_final_high_res.dat', status='unknown',form='unformatted', action='write',&
+       open(25, file='vor_final_low_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
        write(25, rec=1)vor
        close(25)
