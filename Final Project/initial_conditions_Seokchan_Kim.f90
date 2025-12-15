@@ -47,13 +47,6 @@ program shallow_water_model
       real, allocatable::ke1(:, :), ke2(:, :), ke3(:, :)
       real, allocatable::hq(:, :)
 
-      !allocate variables for Adams-bashforth scheme!
-      allocate(us1(Nx, Ny), us2(Nx, Ny), us3(Nx, Ny), vs1(Nx, Ny), vs2(Nx, Ny), vs3(Nx, Ny), hu(Nx, Ny), hv(Nx, Ny))
-      allocate(alp1(Nx, Ny), alp2(Nx, Ny), alp3(Nx, Ny), bet1(Nx, Ny), bet2(Nx, Ny), bet3(Nx, Ny), gam1(Nx, Ny), gam2(Nx, Ny), gam3(Nx, Ny))
-      allocate(del1(Nx, Ny), del2(Nx, Ny), del3(Nx, Ny), eps1(Nx, Ny), eps2(Nx, Ny), eps3(Nx, Ny), pi1(Nx, Ny), pi2(Nx, Ny), pi3(Nx, Ny), pe1(Nx, Ny), pe2(Nx, Ny), pe3(Nx, Ny), ke1(Nx, Ny), ke2(Nx, Ny), ke3(Nx, Ny))
-      allocate(hq(Nx, Ny), vor(Nx, Ny), us(Nx, Ny), vs(Nx, Ny), q(Nx, Ny), pe(Nx, Ny), ke(Nx, Ny))
-      allocate(alp(Nx,Ny), bet(Nx,Ny), del(Nx,Ny), gam(Nx,Ny), eps(Nx,Ny), pi(Nx,Ny))
-
       !resolution!
       !d = 5e+05
       !d = 2.5e+05
@@ -241,7 +234,7 @@ program shallow_water_model
       !create the initial data (vor, pe0, ke0) files for each resolutions!
       open(14, file='vor_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
               access='direct',recl=4*Nx*Ny,iostat=ierr)
-      write(14, rec=1)vor
+      write(14, rec=1)vor0
       close(14)
       
       open(15, file='pe0_initial_high_res.dat', status='unknown',form='unformatted', action='write',&
@@ -392,6 +385,13 @@ program shallow_water_model
       end do
       
       !!!============Adams-bashforth third order scheme============!!!
+      !allocate variables for Adams-bashforth scheme!
+      allocate(us1(Nx, Ny), us2(Nx, Ny), us3(Nx, Ny), vs1(Nx, Ny), vs2(Nx, Ny), vs3(Nx, Ny), hu(Nx, Ny), hv(Nx, Ny))
+      allocate(alp1(Nx, Ny), alp2(Nx, Ny), alp3(Nx, Ny), bet1(Nx, Ny), bet2(Nx, Ny), bet3(Nx, Ny), gam1(Nx, Ny), gam2(Nx, Ny), gam3(Nx, Ny))
+      allocate(del1(Nx, Ny), del2(Nx, Ny), del3(Nx, Ny), eps1(Nx, Ny), eps2(Nx, Ny), eps3(Nx, Ny), pi1(Nx, Ny), pi2(Nx, Ny), pi3(Nx, Ny), pe1(Nx, Ny), pe2(Nx, Ny), pe3(Nx, Ny), ke1(Nx, Ny), ke2(Nx, Ny), ke3(Nx, Ny))
+      allocate(hq(Nx, Ny), vor(Nx, Ny), us(Nx, Ny), vs(Nx, Ny), q(Nx, Ny), pe(Nx, Ny), ke(Nx, Ny))
+      allocate(alp(Nx,Ny), bet(Nx,Ny), del(Nx,Ny), gam(Nx,Ny), eps(Nx,Ny), pi(Nx,Ny))
+      
       us1(:,:) = us0(:,:,1)
       us2(:,:) = us0(:,:,2)
       us3(:,:) = us0(:,:,3)
@@ -643,7 +643,6 @@ program shallow_water_model
        write(25, rec=1)vor
        close(25)
       endif
-      nstep = 0
       end do
 
 end program shallow_water_model
