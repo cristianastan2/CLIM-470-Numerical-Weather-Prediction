@@ -1,4 +1,4 @@
-program hello
+program hello its a monday
 
 
 print*, 'Hello World!'
