@@ -13,8 +13,11 @@ program number_checker
 
 
 ! --- Part b: odd or even ---
-
-
+    if (mod(number, 2.0) == 0.0) then
+        print*, number, "is even."
+    else
+        print*, number, "is odd."
+    end if
 
 
 ! --- Part c: divisible by 3 and/or 5 ---
