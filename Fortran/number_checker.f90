@@ -8,9 +8,14 @@ program number_checker
       read*, number
 
 ! --- Part a: positive, negative or zero ---
-
-
-
+!lorenzos part
+if (number >0.0) then
+	print*, "positive"
+else if (number <0.0) then
+	print*, "negative"
+else 
+	print*, "zero"
+end if
 
 ! --- Part b: odd or even ---
     if (mod(number, 2.0) == 0.0) then
