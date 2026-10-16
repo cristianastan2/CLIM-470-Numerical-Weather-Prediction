@@ -1,7 +1,7 @@
-program hello
+program hello its a monday
 
 
-print*, 'Gary says Hello World!'
+print*, 'Nathan: Hello World!'
 
 end program hello
 
