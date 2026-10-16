@@ -2,6 +2,7 @@ program number_checker
       implicit none
 
       real:: number
+      real:: square, sqroot    ! for gary's code	
 
 ! Prompt user for input
       print*, "Enter a number:"
@@ -36,6 +37,23 @@ endif
 
 
 ! --- Part d: is the square root a positive integer? ---
+! i decided to analyze both the square of the entered number and it
+! square root
+	square = number*number
+	sqroot = sqrt(number)
+	print*, "number squared = ", square
+	print*, "square root = ", sqroot
+	if (int(square) == square) then
+		print*, "number squared is integer ", number, square
+	else
+		print*, "number squared is NOT integer ", number, square
+	end if
+
+	if (int(sqroot) == sqroot) then
+		print*, "square root of number is integer ", sqroot, number
+	else
+		print*, "square root of number is NOT integer", sqroot, number
+	end if
 
 
 end program number_checker
