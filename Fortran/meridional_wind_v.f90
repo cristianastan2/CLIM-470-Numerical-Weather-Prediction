@@ -13,11 +13,13 @@ real, parameter :: Ly = 2000.0 !y length (km)
 real, parameter :: h_max = 2.0 !height of ridge (km)
 real, parameter :: x_center = 3000.0 !ridge peak in x value (km)
 real, parameter :: g = 9.8 !gravity, m/s^2
+real, parameter :: v_initial = 0.0 !initial value for meridional wind (v) (m/s)
 
-real, dimension (:,:), allocatable :: v
-real, dimension (:,:), allocatable :: v_new
-real, dimension (:,:), allocatable :: dvdt
+real, dimension (:,:), allocatable :: v !meridional wind (v) (m/s)
+real, dimension (:,:), allocatable :: v_new !meridional wind at next time step (m/s)
+real, dimension (:,:), allocatable :: dvdt !rate of change for v (m/s)
 real, dimension (:,:), allocatable :: h !for topography height (km)
+
 !begin blueprint
 
 !determine grid points (nx,ny)
