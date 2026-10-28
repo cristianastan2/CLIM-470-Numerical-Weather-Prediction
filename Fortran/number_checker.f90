@@ -8,9 +8,14 @@ program number_checker
       read*, number
 
 ! --- Part a: positive, negative or zero ---
-
-
-
+!lorenzos part
+if (number >0.0) then
+	print*, "positive"
+else if (number <0.0) then
+	print*, "negative"
+else 
+	print*, "zero"
+end if
 
 ! --- Part b: odd or even ---
     if (mod(number, 2.0) == 0.0) then
@@ -21,8 +26,13 @@ program number_checker
 
 
 ! --- Part c: divisible by 3 and/or 5 ---
-
-
+if (modulo(number, 3.0)== 0) then
+	print*,number, " is divisible by 3."
+else if (modulo(number, 5.0) == 0) then
+	print*,number, " is divisible by 5."
+else
+	print*,number, " is not divisible by 3 or 5."
+endif
 
 
 ! --- Part d: is the square root a positive integer? ---
