@@ -128,6 +128,9 @@ def main():
     print(f'starting...')
     resolution = input("enter 500, 250 or 125 to select resolution to plot")
     # ERROR CHECKING needed to verify entered data is correct
+    while resolution.strip() not in ('500', '250', '125'):
+        print(f'resolution entered = ', resolution)
+        resolution = input("enter 500, 250 or 125 to select resolution to plot")
 
     dirin='./'
     zDfil='Hs' + resolution.strip() + '.dat'
