@@ -1,3 +1,5 @@
+from os import WCONTINUED
+
 import numpy as np
 from array import array
 import matplotlib.pyplot as plt
@@ -81,6 +83,38 @@ def plot_section(z_bin, grid_cell_size):
     plt.close(fig)
     return(1)
 
+def get_data(fname, resolution, reclength):
+    file_open = False
+
+    while file_open == False:
+        newfname = input(fname + " is current filename.  If you wish to change it please type in new name: ")
+        if newfname == 'exit': return(97)
+        if newfname == '':
+            newfname = fname    # if nothing entered, try default
+        try:
+            ds_z_bin = open(newfname, "rb")
+        except FileNotFoundError:
+            print("The file: ", newfname, " does not exist.")
+            continue
+        except Exception:
+            print("Other file open error: ", Exception)
+            return(99, None)          # don't know what to do at this point
+        else:
+            file_open = True
+            print("File opened successfully.")
+
+        try:
+            tmp = ds_z_bin.read(reclength)
+        except Exception:
+            print("File read error: ", Exception)
+            return (98, None)
+        else:
+            return (0, tmp)
+
+    # ds_z_bin = open(dirin+zDfil,'rb')
+    # for t in range(ntime):
+
+
 def otherplots(z_bin_mean, nlon, nlat, grid_cell_size):
     """
     This function is included in the project_plt.py to provide examples
@@ -133,8 +167,10 @@ def main():
         resolution = input("enter 500, 250 or 125 to select resolution to plot")
 
     dirin='./'
-    zDfil='Hs' + resolution.strip() + '.dat'
+    zDfil='Hs' + resolution.strip() + '.dat'      # default filename
     print(f'filename with resolution =', zDfil)
+
+    # these may be used later
     uDfil='uwnd.dat'
     vDfil='vwnd.dat'
 
@@ -148,9 +184,11 @@ def main():
     #u_bin=np.zeros((ntime,nlat,nlon))
     #v_bin=np.zeros((ntime,nlat,nlon))
 
-    ds_z_bin = open(dirin+zDfil,'rb')
+    # ds_z_bin = open(dirin+zDfil,'rb')
     # for t in range(ntime):
-    tmp = ds_z_bin.read(recl)
+    rc, tmp = get_data(zDfil, resolution.strip(), recl)
+    if rc != 0 : exit (rc)
+
     tmp1 = array('f',tmp)
     #tmp2=tmp1[1:-1] #for fortran sequential
     z_bin[:,:]=np.reshape(tmp1,(nlat,nlon))
@@ -158,7 +196,7 @@ def main():
 
     topo_fig = plot_topo(z_bin, grid_cell_size)
     section_fig = plot_section(z_bin, grid_cell_size)
-    exit(2)
+    exit(0)
 
 # *************************
 # Script Execution (Bottom)
