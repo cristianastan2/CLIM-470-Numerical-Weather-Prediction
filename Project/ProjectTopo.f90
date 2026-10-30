@@ -55,20 +55,21 @@ program ProjectTopo
         ! so i_nlon*inlat is right for intel.  i_nlon*i_nlat*4 for gfortran
 
         ! *************  end of initialization
-        !    now populate the array with problems values, and write
-
+        !    now populate the array with problems values, and writ
         do i_i = 1, i_nlon
             print*, "processing for resolution: ", a_resolution(i_outer)
             print*, "currently i_i: ", i_i, " and i_nlon", i_nlon
             r_Hs = 0.0
-            if ((i_i * a_resolution(i_outer) <= i_mtnstart).or.(i_i * a_resolution(i_outer) >= i_mtnend)) then
+            i_temp = (i_i - 1) * a_resolution(i_outer)
+            print*,"i_temp after init for this do (i_i): ", i_i, i_temp
+            if ((i_temp <= i_mtnstart).or.(i_temp >= i_mtnend)) then
                     idata(i_i, :, 1) = r_Hs
             else
-                i_temp = i_i * a_resolution(i_outer)
                 CALL calc_Hs(i_temp, a_resolution(i_outer), i_mtnstart, i_mtnend, r_Hs)
-                print*, "longitude and height: ", i_temp, r_Hs
+                print*, "longitude and Mountain height: ", i_temp, r_Hs
                 idata(i_i, :, 1) = r_Hs
             end if
+            print*, "i_temp (0-6000), r_Hs: ", i_temp, r_Hs
         end do
 
         n = 1
