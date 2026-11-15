@@ -39,6 +39,10 @@ program ShallowWater_v1
     real :: r_utend, r_vtend, r_htend    ! diagnostic variables for time steps
     integer :: i_deltat, i_stepnum          ! values for time steps
 
+! mel - variable for u_tend
+real :: dx, dy
+real, parameter :: grav = 9.81
+
     integer :: col_u = 1        ! u value (fortran is 1-based for array columns)
     integer :: col_v = 2        ! v value
     integer :: col_h = 3        ! height of water column above surface
@@ -75,6 +79,10 @@ program ShallowWater_v1
         print*, " status of idata allocation: ", allocation_status
         i_recl = i_nlon*i_nlat*4
         i_deltat = a_timestep_sec(i_outer)
+
+! mel grid spacing for u_tend
+dx = real(a_resolution(i_outer))*1000.0
+dy = dx
 
         ! *** now set up for writing to the output
         ! outfile="./Hs" + a_resolution(i_outer) + ".dat"
@@ -124,6 +132,10 @@ program ShallowWater_v1
         ! timestep 1 and 2 arrays are calculate with Euler function
         !
         ! now setup initial values, from arakawa paper
+! initialize model arrays
+n_zero = 0.0
+n_one = 0.0
+n_two = 0.0
         r_uwind = 20.0
         r_vwind = 0.0
         r_h = 4000.0            ! top surface of the fluid
@@ -146,6 +158,43 @@ n_zero(:,:,col_u) = r_uwind
 print*, "Initial zonal wind (m/s): ", n_zero(1,1,col_u)
 
 ! end zonal wind init mel
+
+! mel calculate initial u_tend
+! du/dt = q*vstar - d(K + Phi)/dx
+
+call calculate_u_tendency( &
+n_zero(:,:,col_u), &
+n_zero(:,:,col_v), &
+n_zero(:,:,col_h), &
+idata(:,:,1), &
+r_f, grav, dx, dy, &
+n_zero(:,:,col_utend))
+
+! process timestep 1
+
+i_stepnum = i_stepnum +1
+
+! mel timestep 1 zonal wind
+! fwd Euler: u(1) = u(0) + dt * du/dt(0)
+
+n_one(:,:,col_u) = n_zero(:,:,col_u) + &
+real(i_deltat)*n_zero(:,:,col_utend)
+
+! calculate u_tend at timestep 1
+
+call calculate_u_tendency( &
+n_one(:,:,col_u), &
+n_one(:,:,col_v), &
+n_one(:,:,col_h), &
+idata(:,:,1), &
+r_f, grav, dx, dy, &
+n_one(:,:,col_utend))
+
+! end mel timestep 1
+
+print*, "timestep for resolution:", a_resolution(i_outer), "=", i_deltat
+print*, "output file", outfile, "NOT written for timestep 1"
+print*, "array:", n_zero(1,1,:)
 
         print*, " timestep for resolution: ", a_resolution(i_outer), " = ", i_deltat
         print*, "timestep 0 u, v, h: TBD"
@@ -188,22 +237,24 @@ print*, "Initial zonal wind (m/s): ", n_zero(1,1,col_u)
 
         ! TEAM MEMBERS INSERT CODE HERE
 
-! begin  mel, zonal (u) timestep 1
-! Fwd Euler: u(1) = u(0) + dt * du/dt(0)
+! mel zonal timestep 2
+! Fwd Euler 2: u(2) = u(1) + dt * du/dt(1)
 
-! n_one(:,:,col_u) = n_zero(:,:,col_u) + &
-! real(i_deltat)*n_zero(:,:,col_utend)
+n_two(:,:,col_u) = n_one(:,:,col_u) + &
+real(i_deltat)*n_one(:,:,col_utend)
 
-! end zonal 1
+! calculate u_tend at timestamp 2
 
-! zonal 2
+call calculate_u_tendency( &
+n_two(:,:,col_u), &
+n_two(:,:,col_v), &
+n_two(:,:,col_h), &
+idata(:,:,1), &
+r_f, grav, dx, dy, &
+n_two(:,:,col_utend))
 
-! Euler 2: u(2) = u(1) + dt * du/dt(1)
 
-! n_two(:,:,col_u) = n_one(:,:,col_u) + &
-! real(i_deltat)*n_one(:,:,col_utend)
-
-!end zonal 2, end mel
+! end mel zonal wind timestep 2
 
 
         print*, "output file ", outfile, "NOT written for timestep 2"
@@ -272,3 +323,75 @@ SUBROUTINE calc_Hs(long, n, i_mtnstart, i_mtnend, r_Hs)
         r_Hs = ((real(i_mtnend) - real(long)) / r_slopewidth) * 2000
     end if
 END SUBROUTINE calc_Hs
+
+! mel - provisional zonal tendency
+! du/dt = q*vstat - d(K + Phi)/dx
+
+subroutine calculate_u_tendency(u, v, h, hs, f, g, dx, dy, utend)
+implicit none
+real, intent(in) :: u(:,:), v(:,:), h(:,:), hs(:,:)
+real, intent(in) :: f, g, dx, dy
+real, intent(out) :: utend(:,:)
+
+integer :: i, j, ip, im
+integer :: nx, ny
+real :: zeta, q, vstar
+real :: k_left, k_right
+real :: phi_left, phi_right
+real :: dvdx, dudy
+real :: grad_energy
+
+nx = size(u,1)
+ny = size(u,2)
+
+utend = 0.0
+
+! last x-column dupicates first periodic point
+
+do j = 1, ny
+do i = 1, nx-1
+
+ip = i+1
+im = i-1
+
+if(i == 1) im = nx-1
+
+! relative vort
+dvdx = (v(ip,j)-v(im,j))/(2.0*dx)
+
+if (j == 1) then
+dudy = (u(i,j+1)-u(i,j))/dy
+else if (j == ny) then
+dudy = (u(i,j)-u(i,j-1))/dy
+else
+dudy = (u(i,j+1)-u(i,j-1))/(2.0*dy)
+end if
+
+zeta = dvdx-dudy
+
+! potential vort and mass flux
+q = (zeta+f)/h(i,j)
+vstar = h(i,j)*v(i,j)
+
+! kinetic energy
+k_left = 0.5*(u(im,j)**2+v(im,j)**2)
+k_right = 0.5*(u(ip,j)**2+v(ip,j)**2)
+
+! geopotential
+phi_left = g*(h(im,j)+hs(im,j))
+phi_right = g*(h(ip,j)+hs(ip,j))
+
+! zonal gradient of K + Phi
+grad_energy = (k_right+phi_right &
+-k_left-phi_left)/(2.0*dx)
+
+! zonal wind tendency
+utend(i,j) = q*vstar-grad_energy
+
+end do
+end do
+
+! periodic x boundary
+utend(nx,:) = utend(1,:)
+
+end subroutine calculate_u_tendency
