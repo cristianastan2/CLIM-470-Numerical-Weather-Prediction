@@ -450,3 +450,67 @@ end do
 utend(nx,:) = utend(1,:)
 
 end subroutine calculate_u_tendency
+
+!lorenzo
+
+subroutine calculate_v_tendency (u,v,h,hs,f,g,dx,dy,vtend)
+implicit none
+real, intent(in) :: u(:,:), v(:,:), h(:,:), hs(:,:)
+real, intent(in) :: f, g, dx, dy
+real, intent(out) :: vtend(:,:)
+
+integer :: i, j, ip, im, jp, jm
+integer :: nx, ny
+real :: zeta, q, ustar
+real :: k_down, k_up
+real :: phi_down, phi_up
+real :: dvdx, dudy
+real :: grad_energy
+
+nx = size(u,1)
+ny = size(u,2)
+
+vtend = 0.0
+
+!north and south boundary j = 1 and j = ny, start j = 2
+!last x point wraps around to starting point
+
+do j = 2, ny-1
+do i = 1, nx-1
+
+ip = i + 1
+im = i - 1
+
+if(i==1) im = nx - 1
+
+!relative vorticity
+dvdx = (v(ip,j)-v(im,j))/(2.0*dx)
+dudy = (u(i,jp) -u(i,jm))/(2.0*dy)
+
+zeta - dvdx-dudy
+
+!potential vorticity and mass flux
+q = (zeta + f)/h(i,j)
+ustar = h(i,j)*u(i,j)
+
+!kinetic energy
+k_down = 0.5*(u(i,jm)**2+v(i,jm)**2)
+k_up = 0.5*(u(i,jp)**2+v(i,jp)**2)
+
+!geopotential
+phi_down = g*(h(i,jm)+hs(i,jm))
+phi_up = g*(h(i,jp)+hs(i,jp))
+
+!meridional gradient of K + phi
+grad_energy = (k_up + phi_up - k_down - phi_down)/(2.0*dy)
+
+!meridional wind tendency
+vtend(i,j) = -q*ustar-grad_energy
+
+end do
+end do
+
+!periodic x boundary
+vtend(nx,:) = vtend(1,:)
+
+end subroutine calculate_v_tendency
