@@ -483,11 +483,14 @@ im = i - 1
 
 if(i==1) im = nx - 1
 
+jp = j + 1
+jm = j - 1
+
 !relative vorticity
 dvdx = (v(ip,j)-v(im,j))/(2.0*dx)
 dudy = (u(i,jp) -u(i,jm))/(2.0*dy)
 
-zeta - dvdx-dudy
+zeta = dvdx-dudy
 
 !potential vorticity and mass flux
 q = (zeta + f)/h(i,j)
